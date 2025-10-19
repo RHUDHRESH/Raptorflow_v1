@@ -34,5 +34,7 @@ export function getInitials(name: string) {
     .slice(0, 2);
 }
 
- DOCKER & DEPLOYMENT
+/* DOCKER & DEPLOYMENT */
+/*
 Dockerfile (Backend)
+*/

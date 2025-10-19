@@ -1,0 +1,345 @@
+name: Enhanced CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop, 'feature/*' ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+  REGISTRY: gcr.io
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+jobs:
+  # ==================== CODE QUALITY CHECKS ====================
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install Python dependencies
+        run: |
+          cd backend
+          pip install flake8 black isort mypy
+      
+      - name: Install Node.js dependencies
+        run: |
+          cd frontend
+          npm ci
+      
+      - name: Check Python code formatting
+        run: |
+          cd backend
+          black --check .
+          isort --check-only .
+      
+      - name: Check Python linting
+        run: |
+          cd backend
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      
+      - name: Check TypeScript formatting
+        run: |
+          cd frontend
+          npm run lint
+      
+      - name: Run SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # ==================== BACKEND TESTS ====================
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_raptorflow
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: backend/requirements*.txt
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: Run security checks
+        run: |
+          cd backend
+          safety check
+          bandit -r . -f json -o bandit-report.json || true
+      
+      - name: Run type checking
+        run: |
+          cd backend
+          mypy . --ignore-missing-imports
+      
+      - name: Run unit tests
+        env:
+          SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.TEST_SUPABASE_KEY }}
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_raptorflow
+          REDIS_URL: redis://localhost:6379
+        run: |
+          cd backend
+          pytest tests/unit -v --cov=. --cov-report=xml --cov-report=html --cov-report=term
+      
+      - name: Run integration tests
+        env:
+          SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.TEST_SUPABASE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_raptorflow
+          REDIS_URL: redis://localhost:6379
+        run: |
+          cd backend
+          pytest tests/integration -v --cov=. --cov-append --cov-report=xml
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+      
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            backend/htmlcov/
+            backend/bandit-report.json
+            backend/coverage.xml
+
+  # ==================== FRONTEND TESTS ====================
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      
+      - name: Run security audit
+        run: |
+          cd frontend
+          npm audit --audit-level=moderate
+      
+      - name: Run type checking
+        run: |
+          cd frontend
+          npm run type-check
+      
+      - name: Run unit tests
+        run: |
+          cd frontend
+          npm run test:unit -- --coverage --watchAll=false
+      
+      - name: Build application
+        run: |
+          cd frontend
+          npm run build
+      
+      - name: Run E2E tests
+        run: |
+          cd frontend
+          npm run test:e2e
+      
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: frontend-test-results
+          path: |
+            frontend/coverage/
+            frontend/playwright-report/
+
+  # ==================== SECURITY SCAN ====================
+  security-scan:
+    name: Comprehensive Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: 'http://localhost:3000'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+      
+      - name: Container security scan
+        run: |
+          docker build -t raptorflow-backend-test ./backend
+          docker build -t raptorflow-frontend-test ./frontend
+          trivy image --format json --output backend-scan.json raptorflow-backend-test
+          trivy image --format json --output frontend-scan.json raptorflow-frontend-test
+      
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-scan-results
+          path: |
+            trivy-results.sarif
+            backend-scan.json
+            frontend-scan.json
+
+  # ==================== PERFORMANCE TESTS ====================
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      
+      - name: Build application
+        run: |
+          cd frontend
+          npm run build
+      
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli@0.12.x
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+      
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+
+  # ==================== DOCKER BUILD TEST ====================
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          load: true
+          tags: raptorflow-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          load: true
+          tags: raptorflow-frontend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Test backend container
+        run: |
+          docker run --rm -d --name backend-test -p 8000:8000 raptorflow-backend:test
+          sleep 10
+          curl -f http://localhost:8000/health || exit 1
+          docker stop backend-test
+      
+      - name: Test frontend container
+        run: |
+          docker run --rm -d --name frontend-test -p 3000:3000 raptorflow-frontend:test
+          sleep 10
+          curl -f http://localhost:3000 || exit 1
+          docker stop frontend-test

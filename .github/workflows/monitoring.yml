@@ -1,0 +1,307 @@
+name: Monitoring and Alerting
+
+on:
+  schedule:
+    # Run every 5 minutes for critical monitoring
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: asia-south1
+
+jobs:
+  # ==================== HEALTH MONITORING ====================
+  health-check:
+    name: Service Health Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Check staging services
+        id: staging_health
+        run: |
+          STAGING_BACKEND_URL=$(gcloud run services describe raptorflow-backend-staging --region ${{ env.GCP_REGION }} --format='value(status.url)' 2>/dev/null || echo "")
+          STAGING_FRONTEND_URL=$(gcloud run services describe raptorflow-frontend-staging --region ${{ env.GCP_REGION }} --format='value(status.url)' 2>/dev/null || echo "")
+          
+          STAGING_STATUS="healthy"
+          
+          if [[ -n "$STAGING_BACKEND_URL" ]]; then
+            if ! curl -f --max-time 10 "$STAGING_BACKEND_URL/health" >/dev/null 2>&1; then
+              STAGING_STATUS="unhealthy"
+              echo "❌ Staging backend is unhealthy"
+            else
+              echo "✅ Staging backend is healthy"
+            fi
+          else
+            echo "ℹ️ Staging backend not found"
+          fi
+          
+          if [[ -n "$STAGING_FRONTEND_URL" ]]; then
+            if ! curl -f --max-time 10 "$STAGING_FRONTEND_URL" >/dev/null 2>&1; then
+              STAGING_STATUS="unhealthy"
+              echo "❌ Staging frontend is unhealthy"
+            else
+              echo "✅ Staging frontend is healthy"
+            fi
+          else
+            echo "ℹ️ Staging frontend not found"
+          fi
+          
+          echo "staging_status=$STAGING_STATUS" >> $GITHUB_OUTPUT
+      
+      - name: Check production services
+        id: production_health
+        run: |
+          PRODUCTION_BACKEND_URL=$(gcloud run services describe raptorflow-backend --region ${{ env.GCP_REGION }} --format='value(status.url)' 2>/dev/null || echo "")
+          PRODUCTION_FRONTEND_URL=$(gcloud run services describe raptorflow-frontend --region ${{ env.GCP_REGION }} --format='value(status.url)' 2>/dev/null || echo "")
+          
+          PRODUCTION_STATUS="healthy"
+          
+          if [[ -n "$PRODUCTION_BACKEND_URL" ]]; then
+            if ! curl -f --max-time 10 "$PRODUCTION_BACKEND_URL/health" >/dev/null 2>&1; then
+              PRODUCTION_STATUS="unhealthy"
+              echo "❌ Production backend is unhealthy"
+            else
+              echo "✅ Production backend is healthy"
+            fi
+          else
+            echo "ℹ️ Production backend not found"
+          fi
+          
+          if [[ -n "$PRODUCTION_FRONTEND_URL" ]]; then
+            if ! curl -f --max-time 10 "$PRODUCTION_FRONTEND_URL" >/dev/null 2>&1; then
+              PRODUCTION_STATUS="unhealthy"
+              echo "❌ Production frontend is unhealthy"
+            else
+              echo "✅ Production frontend is healthy"
+            fi
+          else
+            echo "ℹ️ Production frontend not found"
+          fi
+          
+          echo "production_status=$PRODUCTION_STATUS" >> $GITHUB_OUTPUT
+      
+      - name: Alert on service failure
+        if: steps.staging_health.outputs.staging_status == 'unhealthy' || steps.production_health.outputs.production_status == 'unhealthy'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            🚨 Service Health Alert!
+            
+            Staging Status: ${{ steps.staging_health.outputs.staging_status }}
+            Production Status: ${{ steps.production_health.outputs.production_status }}
+            
+            Please check the services immediately.
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # ==================== PERFORMANCE MONITORING ====================
+  performance-monitor:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Get service metrics
+        run: |
+          echo "Fetching Cloud Run metrics..."
+          
+          # Get backend metrics
+          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=raptorflow-backend" \
+            --limit=50 --format="table(timestamp,textPayload)" --freshness=1h || echo "No backend logs found"
+          
+          # Get frontend metrics
+          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=raptorflow-frontend" \
+            --limit=50 --format="table(timestamp,textPayload)" --freshness=1h || echo "No frontend logs found"
+      
+      - name: Check error rates
+        run: |
+          echo "Checking error rates..."
+          
+          # Check for high error rates in backend
+          ERROR_COUNT=$(gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=raptorflow-backend AND severity>=ERROR" \
+            --freshness=1h --format="value(timestamp)" | wc -l)
+          
+          if [[ $ERROR_COUNT -gt 10 ]]; then
+            echo "❌ High error rate detected: $ERROR_COUNT errors in the last hour"
+            echo "::warning::High error rate in backend service"
+          else
+            echo "✅ Error rate is normal: $ERROR_COUNT errors in the last hour"
+          fi
+      
+      - name: Alert on performance issues
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: warning
+          text: |
+            ⚠️ Performance Alert!
+            
+            Performance issues detected in the services.
+            Please check the metrics dashboard for details.
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # ==================== SECURITY MONITORING ====================
+  security-monitor:
+    name: Security Monitoring
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Check for security events
+        run: |
+          echo "Checking for security events..."
+          
+          # Check for authentication failures
+          AUTH_FAILURES=$(gcloud logging read "resource.type=cloud_run_revision AND (textPayload~\"authentication\" OR textPayload~\"unauthorized\")" \
+            --freshness=1h --format="value(timestamp)" | wc -l)
+          
+          if [[ $AUTH_FAILURES -gt 20 ]]; then
+            echo "❌ High number of authentication failures: $AUTH_FAILURES"
+            echo "::warning::Potential brute force attack detected"
+          else
+            echo "✅ Authentication failures are normal: $AUTH_FAILURES"
+          fi
+          
+          # Check for suspicious activities
+          SUSPICIOUS=$(gcloud logging read "resource.type=cloud_run_revision AND (textPayload~\"attack\" OR textPayload~\"injection\" OR textPayload~\"xss\")" \
+            --freshness=1h --format="value(timestamp)" | wc -l)
+          
+          if [[ $SUSPICIOUS -gt 0 ]]; then
+            echo "❌ Suspicious activities detected: $SUSPICIOUS events"
+            echo "::warning::Security events detected"
+          else
+            echo "✅ No suspicious activities detected"
+          fi
+      
+      - name: Alert on security issues
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            🚨 Security Alert!
+            
+            Security events or issues have been detected.
+            Please investigate immediately.
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # ==================== COST MONITORING ====================
+  cost-monitor:
+    name: Cost Monitoring
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Check billing and costs
+        run: |
+          echo "Checking billing information..."
+          
+          # Get current month's costs
+          CURRENT_MONTH=$(date +%Y-%m)
+          gcloud billing accounts list --format="table(name,displayName,open)" || echo "No billing accounts found"
+          
+          # Check Cloud Run costs (simplified)
+          echo "Checking Cloud Run service usage..."
+          gcloud run services list --region ${{ env.GCP_REGION }} --format="table(name,status.latestReadyRevisionName,spec.template.spec.containers[0].resources.limits)" || echo "No services found"
+      
+      - name: Alert on unusual costs
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: warning
+          text: |
+            💰 Cost Alert!
+            
+            Unusual cost patterns detected.
+            Please review the billing dashboard.
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # ==================== BACKUP MONITORING ====================
+  backup-monitor:
+    name: Backup Monitoring
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Check backup status
+        run: |
+          echo "Checking backup status..."
+          
+          # Check database backups (if using Cloud SQL)
+          gcloud sql backups list --instance=raptorflow-db --format="table(id,startTime,status)" 2>/dev/null || echo "No Cloud SQL instance found"
+          
+          # Check storage backups (if any)
+          gsutil ls gs://${{ env.GCP_PROJECT_ID }}-backups/ 2>/dev/null || echo "No backup bucket found"
+          
+          echo "✅ Backup check completed"
+      
+      - name: Alert on backup issues
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            📦 Backup Alert!
+            
+            Issues detected with backup systems.
+            Please check backup configurations.
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}

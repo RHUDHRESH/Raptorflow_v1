@@ -1,0 +1,423 @@
+name: Enhanced CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      force_deploy:
+        description: 'Force deployment (skip tests)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: asia-south1
+  REGISTRY: gcr.io
+
+jobs:
+  # ==================== PRE-DEPLOYMENT CHECKS ====================
+  pre-deployment:
+    name: Pre-deployment Checks
+    runs-on: ubuntu-latest
+    
+    outputs:
+      should_deploy: ${{ steps.decision.outputs.should_deploy }}
+      deploy_version: ${{ steps.version.outputs.version }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate version
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION=$(git describe --tags --always --dirty)
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Deploy version: $VERSION"
+      
+      - name: Deployment decision
+        id: decision
+        run: |
+          SHOULD_DEPLOY=true
+          
+          # Skip deployment for certain conditions
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "Auto-deploying main branch to staging"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "Auto-deploying tag to production"
+          elif [[ "${{ github.event.inputs.force_deploy }}" == "true" ]]; then
+            echo "Force deployment requested"
+          else
+            SHOULD_DEPLOY=false
+          fi
+          
+          echo "should_deploy=$SHOULD_DEPLOY" >> $GITHUB_OUTPUT
+      
+      - name: Check required secrets
+        run: |
+          REQUIRED_SECRETS=("GCP_PROJECT_ID" "GCP_SA_KEY")
+          for secret in "${REQUIRED_SECRETS[@]}"; do
+            if [[ -z "${{ secrets[secret] }}" ]]; then
+              echo "❌ Secret $secret is not set"
+              exit 1
+            fi
+          done
+          echo "✅ All required secrets are set"
+
+  # ==================== BUILD AND PUSH IMAGES ====================
+  build-images:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: pre-deployment
+    if: needs.pre-deployment.outputs.should_deploy == 'true'
+    
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Authenticate to GCR
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Configure Docker for GCR
+        run: |
+          gcloud auth configure-docker ${{ env.REGISTRY }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/raptorflow-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ needs.pre-deployment.outputs.deploy_version }}
+      
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+      
+      - name: Generate SBOM
+        run: |
+          docker pull ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/raptorflow-${{ matrix.service }}:${{ needs.pre-deployment.outputs.deploy_version }}
+          docker sbom ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/raptorflow-${{ matrix.service }}:${{ needs.pre-deployment.outputs.deploy_version }} > sbom-${{ matrix.service }}.json
+      
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom-${{ matrix.service }}
+          path: sbom-${{ matrix.service }}.json
+
+  # ==================== DEPLOY TO STAGING ====================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [pre-deployment, build-images]
+    if: |
+      needs.pre-deployment.outputs.should_deploy == 'true' && 
+      (github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging')
+    environment: staging
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Deploy backend to Cloud Run
+        run: |
+          gcloud run deploy raptorflow-backend-staging \
+            --image ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/raptorflow-backend:${{ needs.pre-deployment.outputs.deploy_version }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "$(cat .env.staging | sed 's/#.*//' | xargs)" \
+            --set-env-vars "VERSION=${{ needs.pre-deployment.outputs.deploy_version }}" \
+            --memory 2Gi \
+            --cpu 2 \
+            --max-instances 10 \
+            --min-instances 1 \
+            --concurrency 60 \
+            --timeout 300 \
+            --quiet
+      
+      - name: Deploy frontend to Cloud Run
+        run: |
+          gcloud run deploy raptorflow-frontend-staging \
+            --image ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/raptorflow-frontend:${{ needs.pre-deployment.outputs.deploy_version }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "NEXT_PUBLIC_API_URL=${{ secrets.STAGING_BACKEND_URL }},VERSION=${{ needs.pre-deployment.outputs.deploy_version }}" \
+            --memory 1Gi \
+            --cpu 1 \
+            --max-instances 5 \
+            --min-instances 1 \
+            --concurrency 100 \
+            --timeout 60 \
+            --quiet
+      
+      - name: Get service URLs
+        id: urls
+        run: |
+          BACKEND_URL=$(gcloud run services describe raptorflow-backend-staging --region ${{ env.GCP_REGION }} --format='value(status.url)')
+          FRONTEND_URL=$(gcloud run services describe raptorflow-frontend-staging --region ${{ env.GCP_REGION }} --format='value(status.url)')
+          echo "backend_url=$BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "frontend_url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+      
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to be ready..."
+          sleep 30
+      
+      - name: Run health checks
+        run: |
+          echo "Checking backend health..."
+          for i in {1..10}; do
+            if curl -f ${{ steps.urls.outputs.backend_url }}/health; then
+              echo "✅ Backend is healthy"
+              break
+            fi
+            echo "Retry $i/10..."
+            sleep 10
+          done
+          
+          echo "Checking frontend health..."
+          for i in {1..10}; do
+            if curl -f ${{ steps.urls.outputs.frontend_url }}; then
+              echo "✅ Frontend is healthy"
+              break
+            fi
+            echo "Retry $i/10..."
+            sleep 10
+          done
+      
+      - name: Run smoke tests
+        run: |
+          # API endpoint tests
+          curl -f "${{ steps.urls.outputs.backend_url }}/health" || exit 1
+          curl -f "${{ steps.urls.outputs.backend_url }}/api/v1/status" || exit 1
+          
+          # Frontend tests
+          curl -f "${{ steps.urls.outputs.frontend_url }}" || exit 1
+      
+      - name: Notify staging deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            🚀 Staging deployment successful!
+            📦 Version: ${{ needs.pre-deployment.outputs.deploy_version }}
+            🔗 Backend: ${{ steps.urls.outputs.backend_url }}
+            🌐 Frontend: ${{ steps.urls.outputs.frontend_url }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+
+  # ==================== DEPLOY TO PRODUCTION ====================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [pre-deployment, build-images, deploy-staging]
+    if: |
+      needs.pre-deployment.outputs.should_deploy == 'true' && 
+      (startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production')
+    environment: production
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Create backup (optional)
+        run: |
+          echo "Creating backup before deployment..."
+          gcloud run services describe raptorflow-backend --region ${{ env.GCP_REGION }} --format='value(status.url)' > prod-backend-url.txt || echo "No existing production backend found"
+          gcloud run services describe raptorflow-frontend --region ${{ env.GCP_REGION }} --format='value(status.url)' > prod-frontend-url.txt || echo "No existing production frontend found"
+      
+      - name: Deploy backend to Cloud Run
+        run: |
+          gcloud run deploy raptorflow-backend \
+            --image ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/raptorflow-backend:${{ needs.pre-deployment.outputs.deploy_version }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "$(cat .env.production | sed 's/#.*//' | xargs)" \
+            --set-env-vars "VERSION=${{ needs.pre-deployment.outputs.deploy_version }}" \
+            --memory 4Gi \
+            --cpu 4 \
+            --max-instances 50 \
+            --min-instances 2 \
+            --concurrency 80 \
+            --timeout 300 \
+            --quiet
+      
+      - name: Deploy frontend to Cloud Run
+        run: |
+          gcloud run deploy raptorflow-frontend \
+            --image ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/raptorflow-frontend:${{ needs.pre-deployment.outputs.deploy_version }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "NEXT_PUBLIC_API_URL=${{ secrets.PRODUCTION_BACKEND_URL }},VERSION=${{ needs.pre-deployment.outputs.deploy_version }}" \
+            --memory 2Gi \
+            --cpu 2 \
+            --max-instances 20 \
+            --min-instances 2 \
+            --concurrency 100 \
+            --timeout 60 \
+            --quiet
+      
+      - name: Get production URLs
+        id: prod_urls
+        run: |
+          BACKEND_URL=$(gcloud run services describe raptorflow-backend --region ${{ env.GCP_REGION }} --format='value(status.url)')
+          FRONTEND_URL=$(gcloud run services describe raptorflow-frontend --region ${{ env.GCP_REGION }} --format='value(status.url)')
+          echo "backend_url=$BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "frontend_url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+      
+      - name: Wait for production services
+        run: |
+          echo "Waiting for production services to be ready..."
+          sleep 60
+      
+      - name: Run production health checks
+        run: |
+          echo "Checking production backend health..."
+          for i in {1..15}; do
+            if curl -f ${{ steps.prod_urls.outputs.backend_url }}/health; then
+              echo "✅ Production backend is healthy"
+              break
+            fi
+            echo "Retry $i/15..."
+            sleep 15
+          done
+          
+          echo "Checking production frontend health..."
+          for i in {1..15}; do
+            if curl -f ${{ steps.prod_urls.outputs.frontend_url }}; then
+              echo "✅ Production frontend is healthy"
+              break
+            fi
+            echo "Retry $i/15..."
+            sleep 15
+          done
+      
+      - name: Run production smoke tests
+        run: |
+          # Critical API endpoints
+          curl -f "${{ steps.prod_urls.outputs.backend_url }}/health" || exit 1
+          curl -f "${{ steps.prod_urls.outputs.backend_url }}/api/v1/status" || exit 1
+          
+          # Frontend accessibility
+          curl -f "${{ steps.prod_urls.outputs.frontend_url }}" || exit 1
+      
+      - name: Update DNS (if needed)
+        run: |
+          echo "DNS configuration can be added here if using custom domains"
+      
+      - name: Create deployment record
+        run: |
+          echo "Deployment record created:"
+          echo "Version: ${{ needs.pre-deployment.outputs.deploy_version }}"
+          echo "Backend: ${{ steps.prod_urls.outputs.backend_url }}"
+          echo "Frontend: ${{ steps.prod_urls.outputs.frontend_url }}"
+          echo "Timestamp: $(date -u)"
+          echo "Commit: ${{ github.sha }}"
+      
+      - name: Notify production deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            🎉 Production deployment successful!
+            📦 Version: ${{ needs.pre-deployment.outputs.deploy_version }}
+            🔗 Backend: ${{ steps.prod_urls.outputs.backend_url }}
+            🌐 Frontend: ${{ steps.prod_urls.outputs.frontend_url }}
+            👤 Deployed by: ${{ github.actor }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+
+  # ==================== POST-DEPLOYMENT VALIDATION ====================
+  post-deployment:
+    name: Post-deployment Validation
+    runs-on: ubuntu-latest
+    needs: [pre-deployment, deploy-staging, deploy-production]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run performance tests on staging
+        if: needs.deploy-staging.result == 'success'
+        run: |
+          echo "Running performance tests on staging..."
+          # Add performance testing logic here
+      
+      - name: Run security validation on production
+        if: needs.deploy-production.result == 'success'
+        run: |
+          echo "Running security validation on production..."
+          # Add security validation logic here
+      
+      - name: Update deployment dashboard
+        run: |
+          echo "Updating deployment dashboard..."
+          # Add dashboard update logic here
+      
+      - name: Cleanup old images
+        run: |
+          echo "Cleaning up old Docker images..."
+          # Add cleanup logic here

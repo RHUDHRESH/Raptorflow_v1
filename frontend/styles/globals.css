@@ -66,7 +66,7 @@
   }
 
   .card:hover {
-    @apply shadow-card-hover border-opacity-22 scale-[1.01] -translate-y-0.5;
+    @apply shadow-card-hover border-opacity-20 scale-[1.01] -translate-y-0.5;
     @apply transition-all duration-[120ms];
   }
 
@@ -210,5 +210,3 @@
     display: none !important;
   }
 }
-
- ANIMATION VARIANTS
