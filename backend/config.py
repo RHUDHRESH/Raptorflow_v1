@@ -29,4 +29,33 @@ AVAILABLE_MODELS = {
     "embedding": EMBEDDING_MODEL,
 }
 
+# Subscription Tiers
+SUBSCRIPTION_TIERS = {
+    "basic": {
+        "price_inr": 2000,
+        "max_icps": 3,
+        "max_moves": 5,
+        "features": ["positioning", "basic_icps", "content_calendar"],
+        "trend_monitoring": False,
+        "route_back_logic": False,
+    },
+    "pro": {
+        "price_inr": 3500,
+        "max_icps": 6,
+        "max_moves": 15,
+        "features": ["positioning", "advanced_icps", "content_calendar", "trend_monitoring", "strategy_layer"],
+        "trend_monitoring": True,
+        "route_back_logic": True,
+    },
+    "enterprise": {
+        "price_inr": 5000,
+        "max_icps": 9,
+        "max_moves": 999,
+        "features": ["positioning", "advanced_icps", "content_calendar", "trend_monitoring", "strategy_layer", "knowledge_graph"],
+        "trend_monitoring": True,
+        "route_back_logic": True,
+        "white_label": True,
+    },
+}
+
 """Centralised configuration for AI services and environment settings."""
