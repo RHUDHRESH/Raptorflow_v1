@@ -1,0 +1,20 @@
+# node
+node_modules/
+.next/
+pnpm-lock.yaml
+npm-debug.log*
+
+# python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# env
+.env
+.env.*
+*.env
+.env.local
+
+# misc
+.DS_Store

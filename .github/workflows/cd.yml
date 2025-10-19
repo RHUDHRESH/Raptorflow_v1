@@ -1,0 +1,146 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: asia-south1
+
+jobs:
+  # ==================== BUILD & PUSH ====================
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Configure Docker for GCR
+        run: |
+          gcloud auth configure-docker gcr.io
+      
+      - name: Build and push backend
+        run: |
+          docker build -t gcr.io/${{ env.GCP_PROJECT_ID }}/raptorflow-backend:${{ github.sha }} ./backend
+          docker push gcr.io/${{ env.GCP_PROJECT_ID }}/raptorflow-backend:${{ github.sha }}
+      
+      - name: Build and push frontend
+        run: |
+          docker build -t gcr.io/${{ env.GCP_PROJECT_ID }}/raptorflow-frontend:${{ github.sha }} ./frontend
+          docker push gcr.io/${{ env.GCP_PROJECT_ID }}/raptorflow-frontend:${{ github.sha }}
+
+  # ==================== DEPLOY STAGING ====================
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Deploy backend to Cloud Run
+        run: |
+          gcloud run deploy raptorflow-backend-staging \
+            --image gcr.io/${{ env.GCP_PROJECT_ID }}/raptorflow-backend:${{ github.sha }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "$(cat .env.staging | xargs)" \
+            --memory 2Gi \
+            --cpu 2 \
+            --max-instances 10 \
+            --min-instances 1
+      
+      - name: Deploy frontend to Cloud Run
+        run: |
+          gcloud run deploy raptorflow-frontend-staging \
+            --image gcr.io/${{ env.GCP_PROJECT_ID }}/raptorflow-frontend:${{ github.sha }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "NEXT_PUBLIC_API_URL=${{ secrets.STAGING_BACKEND_URL }}" \
+            --memory 1Gi \
+            --cpu 1 \
+            --max-instances 5 \
+            --min-instances 1
+      
+      - name: Run smoke tests
+        run: |
+          curl -f ${{ secrets.STAGING_BACKEND_URL }}/health || exit 1
+          curl -f ${{ secrets.STAGING_FRONTEND_URL }} || exit 1
+
+  # ==================== DEPLOY PRODUCTION ====================
+  deploy-production:
+    name: Deploy to Production
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Deploy backend to Cloud Run
+        run: |
+          gcloud run deploy raptorflow-backend \
+            --image gcr.io/${{ env.GCP_PROJECT_ID }}/raptorflow-backend:${{ github.sha }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "$(cat .env.production | xargs)" \
+            --memory 4Gi \
+            --cpu 4 \
+            --max-instances 50 \
+            --min-instances 2 \
+            --concurrency 80
+      
+      - name: Deploy frontend to Cloud Run
+        run: |
+          gcloud run deploy raptorflow-frontend \
+            --image gcr.io/${{ env.GCP_PROJECT_ID }}/raptorflow-frontend:${{ github.sha }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "NEXT_PUBLIC_API_URL=${{ secrets.PRODUCTION_BACKEND_URL }}" \
+            --memory 2Gi \
+            --cpu 2 \
+            --max-instances 20 \
+            --min-instances 2 \
+            --concurrency 100
+      
+      - name: Run production smoke tests
+        run: |
+          curl -f ${{ secrets.PRODUCTION_BACKEND_URL }}/health || exit 1
+          curl -f ${{ secrets.PRODUCTION_FRONTEND_URL }} || exit 1
+      
+      - name: Notify deployment success
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Production deployment successful! '
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+ COMPREHENSIVE TEST SUITES
