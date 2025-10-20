@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, validator
 from typing import Optional, List
 from datetime import datetime
@@ -71,11 +72,19 @@ if os.getenv('ENVIRONMENT') == 'production':
     app.add_middleware(AuthenticationMiddleware)
 
 # CORS - Production-ready configuration
-allowed_origins = ["*"]  # Default for development
+# SECURITY: Never use wildcard origins with credentials - browsers reject this
 if os.getenv('ENVIRONMENT') == 'production':
     allowed_origins = [
-        os.getenv('FRONTEND_URL', 'https://app.raptorflow.com'),
-        "https://raptorflow.com"
+        os.getenv('FRONTEND_URL', 'https://app.raptorflow.in'),
+        "https://raptorflow.in"
+    ]
+else:
+    # Default to explicit development origin instead of wildcard
+    allowed_origins = [
+        os.getenv('FRONTEND_URL', 'http://localhost:3000'),
+        "http://localhost:5173",  # Vite default
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173"
     ]
 
 app.add_middleware(
@@ -88,6 +97,16 @@ app.add_middleware(
 
 supabase = get_supabase_client()
 razorpay = get_razorpay_client()
+
+# ==================== ASYNC DATABASE HELPERS ====================
+
+async def async_db_query(query_fn):
+    """
+    Execute blocking Supabase query in thread pool to avoid blocking event loop.
+
+    Usage: result = await async_db_query(lambda: supabase.table('x').select('*').execute())
+    """
+    return await run_in_threadpool(query_fn)
 
 # ==================== MODELS ====================
 
@@ -156,26 +175,40 @@ async def create_business(request: Request, intake: BusinessIntake):
             except Exception:
                 pass  # Supabase auth might not be configured
         
-        # Save business
-        result = supabase.table('businesses').insert({
+        # Save business (async to avoid blocking event loop)
+        result = await async_db_query(lambda: supabase.table('businesses').insert({
             'name': intake.name,
             'industry': intake.industry,
             'location': intake.location,
             'description': intake.description,
             'goals': {'text': intake.goals},
             'user_id': user_id  # Add user_id for RLS
-        }).execute()
-        
+        }).execute())
+
+        # Check for errors and valid data
+        if hasattr(result, 'error') and result.error:
+            logger.error(f"Database error creating business: {result.error}")
+            raise HTTPException(status_code=500, detail="Failed to create business")
+
+        if not result.data or len(result.data) == 0:
+            logger.error("Business insert returned no data")
+            raise HTTPException(status_code=500, detail="Failed to create business")
+
         business_id = result.data[0]['id']
-        
-        # Create trial subscription
-        supabase.table('subscriptions').insert({
+
+        # Create trial subscription (async to avoid blocking event loop)
+        sub_result = await async_db_query(lambda: supabase.table('subscriptions').insert({
             'business_id': business_id,
             'tier': 'basic',
             'max_icps': 3,
             'max_moves': 5,
-            'status': 'trial'
-        }).execute()
+            'status': 'trial',
+            'user_id': user_id  # Add user_id for RLS
+        }).execute())
+
+        if (hasattr(sub_result, 'error') and sub_result.error) or not sub_result.data:
+            logger.error(f"Database error creating subscription: {getattr(sub_result, 'error', 'No data')}")
+            raise HTTPException(status_code=500, detail="Failed to create subscription")
         
         logger.info(f"Business created: {business_id} by user {user_id}")
         
@@ -199,11 +232,23 @@ async def run_research(request: Request, business_id: str):
     """Run complete research analysis"""
     try:
         user_id = getattr(request.state, 'user_id', 'anonymous')
-        
-        # Verify user owns the business (RLS will handle this, but we check for better UX)
-        biz = supabase.table('businesses').select('*').eq('id', business_id).single().execute()
-        if not biz.data:
+
+        # Verify user owns the business - EXPLICIT ownership check (async)
+        biz = await async_db_query(
+            lambda: supabase.table('businesses').select('*').eq('id', business_id).single().execute()
+        )
+
+        # Check for errors or missing data
+        if (hasattr(biz, 'error') and biz.error) or not biz.data:
+            logger.warning(f"Business {business_id} not found or access denied for user {user_id}")
             raise HTTPException(status_code=404, detail="Business not found")
+
+        # SECURITY: Explicit tenant ownership verification
+        # Never rely solely on RLS - verify in application layer
+        business_owner_id = biz.data.get('user_id')
+        if business_owner_id != user_id:
+            logger.warning(f"Access denied: User {user_id} attempted to access business {business_id} owned by {business_owner_id}")
+            raise HTTPException(status_code=403, detail="Access denied - you do not own this business")
         
         # Check cost limits
         cost_control = get_cost_control()
@@ -282,11 +327,26 @@ async def get_research(business_id: str):
 # ---------- POSITIONING ----------
 
 @app.post("/api/positioning/{business_id}")
-async def analyze_positioning(business_id: str):
+async def analyze_positioning(request: Request, business_id: str):
     """Generate 3 positioning options"""
     try:
-        biz = supabase.table('businesses').select('*').eq('id', business_id).single().execute()
-        comps = supabase.table('competitor_ladder').select('*').eq('business_id', business_id).execute()
+        user_id = getattr(request.state, 'user_id', 'anonymous')
+
+        # SECURITY: Verify ownership (async)
+        biz = await async_db_query(
+            lambda: supabase.table('businesses').select('*').eq('id', business_id).single().execute()
+        )
+
+        if (hasattr(biz, 'error') and biz.error) or not biz.data:
+            raise HTTPException(status_code=404, detail="Business not found")
+
+        if biz.data.get('user_id') != user_id:
+            logger.warning(f"Access denied: User {user_id} attempted to access business {business_id}")
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        comps = await async_db_query(
+            lambda: supabase.table('competitor_ladder').select('*').eq('business_id', business_id).execute()
+        )
         
         result = await positioning_agent.ainvoke({
             'business_id': business_id,
@@ -357,11 +417,31 @@ async def get_positioning(business_id: str):
 # ---------- ICPs ----------
 
 @app.post("/api/icps/{business_id}")
-async def generate_icps(business_id: str):
+async def generate_icps(request: Request, business_id: str):
     """Generate ICPs based on positioning"""
     try:
-        # Check subscription tier
-        sub = supabase.table('subscriptions').select('*').eq('business_id', business_id).single().execute()
+        user_id = getattr(request.state, 'user_id', 'anonymous')
+
+        # SECURITY: Verify ownership first (async)
+        biz = await async_db_query(
+            lambda: supabase.table('businesses').select('*').eq('id', business_id).single().execute()
+        )
+
+        if (hasattr(biz, 'error') and biz.error) or not biz.data:
+            raise HTTPException(status_code=404, detail="Business not found")
+
+        if biz.data.get('user_id') != user_id:
+            logger.warning(f"Access denied: User {user_id} attempted to access business {business_id}")
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Check subscription tier (async)
+        sub = await async_db_query(
+            lambda: supabase.table('subscriptions').select('*').eq('business_id', business_id).single().execute()
+        )
+
+        if (hasattr(sub, 'error') and sub.error) or not sub.data:
+            raise HTTPException(status_code=500, detail="Subscription not found")
+
         max_icps = sub.data['max_icps']
         
         # Get positioning
@@ -407,17 +487,35 @@ async def get_icps(business_id: str):
 # ---------- MOVES (Campaigns) ----------
 
 @app.post("/api/moves/{business_id}")
-async def create_move(business_id: str, move: MoveCreate):
+async def create_move(request: Request, business_id: str, move: MoveCreate):
     """Create new campaign/move"""
     try:
-        # Get ICPs and positioning
-        icps = supabase.table('icps').select('*').eq('business_id', business_id).execute()
-        pos = supabase.table('positioning_analyses')\
-            .select('*')\
-            .eq('business_id', business_id)\
-            .order('created_at', desc=True)\
-            .limit(1)\
-            .execute()  # Remove .single() to handle no data case
+        user_id = getattr(request.state, 'user_id', 'anonymous')
+
+        # SECURITY: Verify ownership first (async)
+        biz = await async_db_query(
+            lambda: supabase.table('businesses').select('*').eq('id', business_id).single().execute()
+        )
+
+        if (hasattr(biz, 'error') and biz.error) or not biz.data:
+            raise HTTPException(status_code=404, detail="Business not found")
+
+        if biz.data.get('user_id') != user_id:
+            logger.warning(f"Access denied: User {user_id} attempted to access business {business_id}")
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Get ICPs and positioning (async)
+        icps = await async_db_query(
+            lambda: supabase.table('icps').select('*').eq('business_id', business_id).execute()
+        )
+        pos = await async_db_query(
+            lambda: supabase.table('positioning_analyses')
+            .select('*')
+            .eq('business_id', business_id)
+            .order('created_at', desc=True)
+            .limit(1)
+            .execute()
+        )
         
         if not pos.data:
             raise HTTPException(status_code=400, detail="No positioning analysis found")
