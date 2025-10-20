@@ -26,7 +26,8 @@ class RaptorflowAPIClient:
         industry: str,
         location: str,
         description: str,
-        goals: str
+        goals: str,
+        user_id: Optional[str] = None  # Add user_id parameter
     ) -> Dict[str, Any]:
         """
         Create new business and start research flow
@@ -38,25 +39,49 @@ class RaptorflowAPIClient:
         supabase = get_supabase_client()
 
         try:
-            # Save business
+            # Save business with user_id for RLS
             result = supabase.table('businesses').insert({
                 'name': name,
                 'industry': industry,
                 'location': location,
                 'description': description,
-                'goals': {'text': goals}
+                'goals': {'text': goals},
+                'user_id': user_id  # Persist user attribution
             }).execute()
+
+            # Check for errors and valid data
+            if result.error:
+                logger.error(f"Database error creating business: {result.error}")
+                return {
+                    "success": False,
+                    "error": "Failed to create business"
+                }
+
+            if not result.data or len(result.data) == 0:
+                logger.error("Business insert returned no data (possibly blocked by RLS)")
+                return {
+                    "success": False,
+                    "error": "Failed to create business - access denied"
+                }
 
             business_id = result.data[0]['id']
 
-            # Create trial subscription
+            # Create trial subscription with user_id
             sub_result = supabase.table('subscriptions').insert({
                 'business_id': business_id,
                 'tier': 'trial',
                 'max_icps': 3,
                 'max_moves': 5,
-                'status': 'trial'
+                'status': 'trial',
+                'user_id': user_id  # Persist user attribution
             }).execute()
+
+            if sub_result.error or not sub_result.data or len(sub_result.data) == 0:
+                logger.error(f"Database error creating subscription: {sub_result.error}")
+                return {
+                    "success": False,
+                    "error": "Failed to create subscription"
+                }
 
             return {
                 "success": True,
