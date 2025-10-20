@@ -7,7 +7,9 @@
       "Bash(do if [ -d \"C:/Users/hp/OneDrive/Desktop/Raptorflow_v1/backend/$dir\" ])",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(cat C:/Users/hp/OneDrive/Desktop/Raptorflow_v1/INTEGRATION_SUMMARY.txt)"
+      "Bash(cat C:/Users/hp/OneDrive/Desktop/Raptorflow_v1/INTEGRATION_SUMMARY.txt)",
+      "Bash(find backend/tools -name \"*.py\" -type f -exec wc -l {} +)",
+      "Bash(find backend/agents -name \"*.py\" -type f -exec wc -l {} +)"
     ],
     "deny": [],
     "ask": []
