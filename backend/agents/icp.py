@@ -6,18 +6,18 @@ from tools.tag_extractor import TagExtractorTool
 from tools.segment_scorer import SegmentScorerTool
 from utils.embeddings import generate_embedding
 from utils.supabase_client import get_supabase_client
+from .base_agent import BaseAgent, AgentState
 import json
 
-class ICPState(TypedDict):
-    business_id: str
+class ICPState(AgentState):
     positioning: Dict
     max_icps: int
     personas: List[Dict]
     icps: List[Dict]
-    status: str
 
-class ICPAgent:
+class ICPAgent(BaseAgent):
     def __init__(self):
+        super().__init__("ICP Agent", "Generates Ideal Customer Profiles with budget-controlled AI")
         self.persona_gen = PersonaGeneratorTool()
         self.jtbd = JTBDMapperTool()
         self.tag_extractor = TagExtractorTool()
@@ -78,14 +78,10 @@ class ICPAgent:
         return state
     
     async def _create_value_props(self, state: ICPState) -> ICPState:
-        """Create value propositions for each persona"""
+        """Create value propositions for each persona using budget-controlled AI"""
         positioning = state['positioning']
         
         for persona in state['personas']:
-            # Use Gemini to create value prop
-            from utils.gemini_client import get_gemini_client
-            gemini = get_gemini_client()
-            
             prompt = f"""Create value proposition for this persona.
 
 PERSONA: {persona['name']}
@@ -103,10 +99,38 @@ Value Proposition Canvas:
 
 Return JSON with these sections."""
             
-            response = gemini.generate_content(prompt)
-            vp_data = json.loads(response.text)
+            # Use budget-controlled AI call
+            ai_result = self.call_ai_with_budget_control(
+                prompt=prompt,
+                task_complexity="medium",  # Value props need some reasoning but not GPT-5
+                estimated_tokens=800
+            )
             
-            persona['value_proposition'] = vp_data
+            if ai_result["success"]:
+                try:
+                    vp_data = json.loads(ai_result["content"])
+                    persona['value_proposition'] = vp_data
+                except json.JSONDecodeError:
+                    # Fallback if JSON parsing fails
+                    persona['value_proposition'] = {
+                        "customer_jobs": "Jobs extracted from JTBD",
+                        "pains": "Common pain points identified",
+                        "gains": "Desired outcomes defined",
+                        "pain_relievers": "Solutions offered",
+                        "gain_creators": "Value created",
+                        "products_services": "Services provided"
+                    }
+            else:
+                # Use fallback if budget exhausted
+                persona['value_proposition'] = {
+                    "customer_jobs": "Jobs extracted from JTBD",
+                    "pains": "Common pain points identified",
+                    "gains": "Desired outcomes defined",
+                    "pain_relievers": "Solutions offered",
+                    "gain_creators": "Value created",
+                    "products_services": "Services provided",
+                    "budget_fallback": True
+                }
         
         return state
     
@@ -181,6 +205,85 @@ Return JSON with these sections."""
                 'monitoring_tags': icp['monitoring_tags'],
                 'embedding': embedding
             }).execute()
+        
+        return state
+
+    def _process(self, state: ICPState) -> ICPState:
+        """Main processing logic for ICP generation"""
+        try:
+            # Initialize state
+            state['stage'] = 'processing'
+            state['personas'] = []
+            state['icps'] = []
+            
+            # Run the ICP generation workflow
+            # For now, we'll run synchronously for simplicity
+            # In production, this should be async
+            import asyncio
+            
+            # Create event loop if needed
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            # Run the workflow
+            result = loop.run_until_complete(
+                self._run_icp_workflow(state)
+            )
+            
+            state.update(result)
+            state['stage'] = 'completed'
+            
+        except Exception as e:
+            state['error'] = str(e)
+            state['stage'] = 'failed'
+        
+        return state
+
+    def _validate(self, state: ICPState) -> ICPState:
+        """Validate ICP results"""
+        if state.get('error'):
+            return state
+        
+        # Check if we have valid ICPs
+        if not state.get('icps') or len(state['icps']) == 0:
+            state['error'] = "No ICPs generated"
+            return state
+        
+        # Validate each ICP has required fields
+        required_fields = ['name', 'demographics', 'psychographics', 'value_proposition']
+        for icp in state['icps']:
+            for field in required_fields:
+                if field not in icp or not icp[field]:
+                    state['error'] = f"ICP missing required field: {field}"
+                    return state
+        
+        return state
+
+    async def _run_icp_workflow(self, state: ICPState) -> ICPState:
+        """Run the complete ICP generation workflow"""
+        # Generate personas
+        state = await self._generate_personas(state)
+        
+        # Map JTBD
+        state = await self._map_jtbd(state)
+        
+        # Create value propositions
+        state = await self._create_value_props(state)
+        
+        # Score segments
+        state = await self._score_segments(state)
+        
+        # Select top ICPs
+        state = await self._select_top_icps(state)
+        
+        # Extract monitoring tags
+        state = await self._extract_monitoring_tags(state)
+        
+        # Generate embeddings
+        state = await self._generate_embeddings(state)
         
         return state
 

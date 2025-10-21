@@ -1,20 +1,107 @@
-# node
-node_modules/
-.next/
-pnpm-lock.yaml
-npm-debug.log*
-
-# python
-.venv/
-venv/
-__pycache__/
-*.pyc
-
-# env
+# ==========================================
+# Environment & Secrets - CRITICAL!
+# ==========================================
 .env
 .env.*
-*.env
-.env.local
+!.env.example
+*.key
+*.pem
+secrets/
+credentials.json
+service-account.json
+gcp-key.json
 
-# misc
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# ==========================================
+# Node / Frontend
+# ==========================================
+node_modules/
+.next/
+out/
+build/
+pnpm-lock.yaml
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel
+.turbo
+
+# ==========================================
+# Database
+# ==========================================
+*.db
+*.sqlite
+*.sqlite3
+*.sql.backup
+dump.rdb
+
+# ==========================================
+# Logs
+# ==========================================
+logs/
+*.log
+
+# ==========================================
+# Docker
+# ==========================================
+docker-compose.override.yml
+
+# ==========================================
+# Cloud & Infrastructure
+# ==========================================
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+
+# ==========================================
+# OS
+# ==========================================
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ==========================================
+# IDE
+# ==========================================
+.vscode/
+.idea/
+*.sublime-*
+
+# ==========================================
+# Application Specific
+# ==========================================
+uploads/
+media/
+tmp/
+temp/
+*.tmp
+*.backup
+*.bak
+cache/
+.cache/
+
+# Keep these
+!.env.example
+!.gitkeep
+!README.md

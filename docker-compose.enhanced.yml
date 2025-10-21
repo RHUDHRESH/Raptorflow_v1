@@ -1,0 +1,732 @@
+# ==========================================
+# Enhanced Docker Compose for Local Development
+# ==========================================
+# Comprehensive development environment with monitoring, testing, and debugging tools
+# Optimized for local development and testing workflows
+
+version: '3.8'
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  raptorflow-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  
+  monitoring-network:
+    driver: bridge
+  
+  testing-network:
+    driver: bridge
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  # Database volumes
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  
+  # Application volumes
+  backend-cache:
+    driver: local
+  frontend-cache:
+    driver: local
+  
+  # Monitoring volumes
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  jaeger-data:
+    driver: local
+  
+  # Logs and debugging
+  backend-logs:
+    driver: local
+  frontend-logs:
+    driver: local
+  nginx-logs:
+    driver: local
+
+# ==========================================
+# Services
+# ==========================================
+services:
+
+  # ==========================================
+  # Application Services
+  # ==========================================
+  
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: raptorflow-backend-dev
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "9090:9090"  # Metrics
+      - "5678:5678"  # Debug port
+    environment:
+      # Application Configuration
+      - PORT=8000
+      - HOST=0.0.0.0
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - DEBUG=true
+      - RELOAD=true
+      
+      # Database Configuration
+      - DATABASE_URL=postgresql://raptorflow:raptorflow@postgres:5432/raptorflow_dev
+      - SUPABASE_URL=${SUPABASE_URL:-http://localhost:54321}
+      - SUPABASE_KEY=${SUPABASE_KEY:-dev-key}
+      
+      # Redis Configuration
+      - REDIS_URL=redis://redis:6379/0
+      - CACHE_TTL=300
+      
+      # AI API Keys (from .env file)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+      
+      # Payment Configuration
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      
+      # Security Configuration
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-secret-key}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dev-encryption-key}
+      
+      # Monitoring and Debugging
+      - ENABLE_METRICS=true
+      - ENABLE_TRACING=true
+      - ENABLE_PROFILING=true
+      - PROMETHEUS_PORT=9090
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      
+      # Development Tools
+      - ENABLE_SQL_DEBUG=true
+      - ENABLE_REQUEST_LOGGING=true
+      - ENABLE_CORS_DEBUG=true
+    
+    volumes:
+      # Source code mounting for hot reload
+      - ./backend:/app
+      - backend-cache:/app/.cache
+      - backend-logs:/app/logs
+      
+      # Development tools
+      - ./scripts:/scripts:ro
+    
+    networks:
+      - raptorflow-network
+      - monitoring-network
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`backend.localhost`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      - "com.raptorflow.service=backend"
+      - "com.raptorflow.environment=development"
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: raptorflow-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "3001:3001"  # Next.js debug port
+    environment:
+      # Application Configuration
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_APP_NAME=RaptorFlow (Dev)
+      - NEXT_PUBLIC_APP_VERSION=dev
+      
+      # Development Features
+      - NEXT_PUBLIC_ENABLE_ANALYTICS=false
+      - NEXT_PUBLIC_ENABLE_ERROR_REPORTING=false
+      - NEXT_PUBLIC_ENABLE_PERFORMANCE_MONITORING=true
+      - NEXT_PUBLIC_ENABLE_DEBUG_MODE=true
+      
+      # API Configuration
+      - NEXT_PUBLIC_API_TIMEOUT=30000
+      - NEXT_PUBLIC_ENABLE_MOCK_DATA=false
+      
+      # Debug Configuration
+      - NEXT_PUBLIC_DEBUG_COMPONENTS=true
+      - NEXT_PUBLIC_DEBUG_ROUTES=true
+      - NEXT_PUBLIC_DEBUG_API=true
+    
+    volumes:
+      # Source code mounting for hot reload
+      - ./frontend:/app
+      - /app/node_modules/.cache
+      - frontend-cache:/app/.next/cache
+      - frontend-logs:/app/logs
+    
+    networks:
+      - raptorflow-network
+    
+    depends_on:
+      - backend
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - "com.raptorflow.service=frontend"
+      - "com.raptorflow.environment=development"
+
+  # ==========================================
+  # Database Services
+  # ==========================================
+  
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: raptorflow-postgres-dev
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=raptorflow_dev
+      - POSTGRES_USER=raptorflow
+      - POSTGRES_PASSWORD=raptorflow
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+      - ./database/migrations:/migrations:ro
+    
+    networks:
+      - raptorflow-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raptorflow -d raptorflow_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    labels:
+      - "com.raptorflow.service=database"
+      - "com.raptorflow.environment=development"
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: raptorflow-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redisdev
+    
+    volumes:
+      - redis-data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    
+    networks:
+      - raptorflow-network
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    
+    labels:
+      - "com.raptorflow.service=cache"
+      - "com.raptorflow.environment=development"
+
+  # ==========================================
+  # Monitoring and Observability
+  # ==========================================
+  
+  # Prometheus Metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: raptorflow-prometheus-dev
+    restart: unless-stopped
+    ports:
+      - "9091:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus-rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    
+    networks:
+      - monitoring-network
+    
+    depends_on:
+      - backend
+      - frontend
+    
+    labels:
+      - "com.raptorflow.service=monitoring"
+      - "com.raptorflow.environment=development"
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: raptorflow-grafana-dev
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_SERVER_DOMAIN=localhost
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+    
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    
+    networks:
+      - monitoring-network
+    
+    depends_on:
+      - prometheus
+    
+    labels:
+      - "com.raptorflow.service=dashboard"
+      - "com.raptorflow.environment=development"
+
+  # Jaeger Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: raptorflow-jaeger-dev
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # HTTP collector
+      - "6831:6831/udp" # UDP collector
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=memory
+    
+    volumes:
+      - jaeger-data:/tmp
+    
+    networks:
+      - monitoring-network
+    
+    labels:
+      - "com.raptorflow.service=tracing"
+      - "com.raptorflow.environment=development"
+
+  # ==========================================
+  # Development Tools
+  # ==========================================
+  
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: raptorflow-nginx-dev
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx-logs:/var/log/nginx
+    
+    networks:
+      - raptorflow-network
+    
+    depends_on:
+      - backend
+      - frontend
+    
+    labels:
+      - "com.raptorflow.service=proxy"
+      - "com.raptorflow.environment=development"
+
+  # MailHog for Email Testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: raptorflow-mailhog-dev
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    
+    networks:
+      - raptorflow-network
+    
+    labels:
+      - "com.raptorflow.service=email-testing"
+      - "com.raptorflow.environment=development"
+
+  # ==========================================
+  # Testing Services
+  # ==========================================
+  
+  # Backend Testing Container
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: testing
+    container_name: raptorflow-backend-test
+    environment:
+      - ENVIRONMENT=testing
+      - DATABASE_URL=postgresql://raptorflow:raptorflow@postgres-test:5432/raptorflow_test
+      - REDIS_URL=redis://redis-test:6379/0
+      - TESTING=true
+      - LOG_LEVEL=DEBUG
+    
+    volumes:
+      - ./backend:/app
+      - backend-cache:/app/.cache
+    
+    networks:
+      - testing-network
+    
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    
+    command: ["python", "-m", "pytest", "tests/", "-v", "--cov=app", "--cov-report=html"]
+    
+    profiles:
+      - testing
+
+  # Frontend Testing Container
+  frontend-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: testing
+    container_name: raptorflow-frontend-test
+    environment:
+      - NODE_ENV=test
+      - NEXT_PUBLIC_API_URL=http://backend-test:8000
+      - CI=true
+    
+    volumes:
+      - ./frontend:/app
+      - frontend-cache:/app/.next/cache
+    
+    networks:
+      - testing-network
+    
+    depends_on:
+      - backend-test
+    
+    command: ["npm", "run", "test:ci"]
+    
+    profiles:
+      - testing
+
+  # Testing Database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: raptorflow-postgres-test
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=raptorflow_test
+      - POSTGRES_USER=raptorflow
+      - POSTGRES_PASSWORD=raptorflow
+    
+    volumes:
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    
+    networks:
+      - testing-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raptorflow -d raptorflow_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    
+    profiles:
+      - testing
+
+  # Testing Redis
+  redis-test:
+    image: redis:7-alpine
+    container_name: raptorflow-redis-test
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    
+    networks:
+      - testing-network
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    
+    profiles:
+      - testing
+
+  # ==========================================
+  # Performance Testing
+  # ==========================================
+  
+  # K6 Load Testing
+  k6:
+    image: grafana/k6:latest
+    container_name: raptorflow-k6-test
+    restart: "no"
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true
+    
+    volumes:
+      - ./tests/performance:/scripts:ro
+    
+    networks:
+      - raptorflow-network
+      - monitoring-network
+    
+    depends_on:
+      - backend
+      - frontend
+    
+    command: ["run", "--vus", "10", "--duration", "30s", "/scripts/load-test.js"]
+    
+    profiles:
+      - performance
+
+  # ==========================================
+  # Security Scanning
+  # ==========================================
+  
+  # OWASP ZAP Security Scanner
+  zap:
+    image: owasp/zap2docker-stable
+    container_name: raptorflow-zap-scan
+    restart: "no"
+    ports:
+      - "8090:8090"
+    environment:
+      - ZAP_HOST=0.0.0.0
+      - ZAP_PORT=8090
+    
+    volumes:
+      - ./security/zap:/zap/wrk:ro
+      - ./security/reports:/zap/reports
+    
+    networks:
+      - raptorflow-network
+    
+    depends_on:
+      - backend
+      - frontend
+    
+    command: ["zap.sh", "-daemon", "-host", "0.0.0.0", "-port", "8090", "-config", "api.addrs.addr.name=.*", "-config", "api.addrs.addr.regex=true"]
+    
+    profiles:
+      - security
+
+  # ==========================================
+  # Development Utilities
+  # ==========================================
+  
+  # Database Admin (pgAdmin)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: raptorflow-pgadmin-dev
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@raptorflow.dev
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./config/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    
+    networks:
+      - raptorflow-network
+    
+    depends_on:
+      - postgres
+    
+    profiles:
+      - tools
+
+  # Redis Commander
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: raptorflow-redis-commander-dev
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:redisdev
+    
+    networks:
+      - raptorflow-network
+    
+    depends_on:
+      - redis
+    
+    profiles:
+      - tools
+
+  # ==========================================
+  # Background Jobs
+  # ==========================================
+  
+  # Cron Service for Scheduled Tasks
+  cron:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: raptorflow-cron-dev
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://raptorflow:raptorflow@postgres:5432/raptorflow_dev
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+    
+    volumes:
+      - ./backend:/app
+      - backend-logs:/app/logs
+    
+    networks:
+      - raptorflow-network
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    
+    command: ["python", "-m", "scripts.trend_monitor_cron"]
+    
+    labels:
+      - "com.raptorflow.service=cron"
+      - "com.raptorflow.environment=development"
+
+  # ==========================================
+  # Documentation
+  # ==========================================
+  
+  # Swagger UI for API Documentation
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    container_name: raptorflow-swagger-dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SWAGGER_JSON=/api/docs/openapi.json
+      - BASE_URL=/swagger
+    
+    volumes:
+      - ./docs:/api/docs:ro
+    
+    networks:
+      - raptorflow-network
+    
+    depends_on:
+      - backend
+    
+    profiles:
+      - docs
+
+# ==========================================
+# Configuration Overrides
+# ==========================================
+x-common-variables: &common-variables
+  ENVIRONMENT: development
+  LOG_LEVEL: DEBUG
+  TZ: UTC
+
+x-healthcheck: &default-healthcheck
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 30s
+
+x-restart-policy: &restart-policy
+  restart: unless-stopped
+
+# ==========================================
+# Development Profiles
+# ==========================================
+# Usage examples:
+#
+# Start main development environment:
+# docker-compose up -d
+#
+# Start with testing tools:
+# docker-compose --profile testing up -d
+#
+# Start with performance tools:
+# docker-compose --profile performance up -d
+#
+# Start with security tools:
+# docker-compose --profile security up -d
+#
+# Start with development tools:
+# docker-compose --profile tools up -d
+#
+# Start all services:
+# docker-compose --profile testing --profile performance --profile security --profile tools up -d

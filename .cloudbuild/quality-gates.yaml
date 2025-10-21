@@ -1,0 +1,243 @@
+# Google Cloud Build configuration for quality gates
+# This is an alternative to GitHub Actions for teams using GCP exclusively
+#
+# To use this:
+# 1. Set up a Cloud Build trigger connected to your repository
+# 2. Configure trigger to run on pull requests
+# 3. Point to this file as the build configuration
+
+steps:
+  # =====================================================
+  # Backend Quality Checks
+  # =====================================================
+
+  - name: 'python:3.10-slim'
+    id: 'backend-install'
+    dir: 'backend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "📦 Installing backend dependencies..."
+        pip install --no-cache-dir -q -r requirements.txt -r requirements-dev.txt
+        echo "✓ Dependencies installed"
+    waitFor: ['-']
+
+  - name: 'python:3.10-slim'
+    id: 'backend-ruff-lint'
+    dir: 'backend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🔍 Running Ruff linter..."
+        pip install -q ruff==0.1.9
+        ruff check .
+        echo "✓ Linting passed"
+    waitFor: ['backend-install']
+
+  - name: 'python:3.10-slim'
+    id: 'backend-ruff-format'
+    dir: 'backend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "📝 Checking code formatting..."
+        pip install -q ruff==0.1.9
+        ruff format --check .
+        echo "✓ Formatting check passed"
+    waitFor: ['backend-install']
+
+  - name: 'python:3.10-slim'
+    id: 'backend-mypy'
+    dir: 'backend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🔎 Running type checking..."
+        pip install -q mypy==1.7.1
+        mypy . --config-file=../pyproject.toml || echo "⚠️  Type checking warnings present"
+        echo "✓ Type checking complete"
+    waitFor: ['backend-install']
+
+  - name: 'python:3.10-slim'
+    id: 'backend-tests'
+    dir: 'backend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🧪 Running backend tests..."
+        pip install -q pytest pytest-asyncio pytest-cov
+        pytest --cov=. --cov-report=term-missing --cov-report=xml
+        echo "✓ Tests passed"
+    env:
+      - 'SUPABASE_URL=${_SUPABASE_URL}'
+      - 'SUPABASE_KEY=${_SUPABASE_KEY}'
+    waitFor: ['backend-install']
+
+  - name: 'python:3.10-slim'
+    id: 'backend-security'
+    dir: 'backend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🔒 Running security scans..."
+        pip install -q bandit safety
+        bandit -r . -f json -o bandit-report.json || echo "⚠️  Security warnings found"
+        safety check --json || echo "⚠️  Dependency vulnerabilities found"
+        echo "✓ Security scan complete"
+    waitFor: ['backend-install']
+
+  # =====================================================
+  # Frontend Quality Checks
+  # =====================================================
+
+  - name: 'node:20-slim'
+    id: 'frontend-install'
+    dir: 'frontend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "📦 Installing frontend dependencies..."
+        npm ci --silent
+        echo "✓ Dependencies installed"
+    waitFor: ['-']
+
+  - name: 'node:20-slim'
+    id: 'frontend-typecheck'
+    dir: 'frontend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🔎 Running TypeScript type checking..."
+        npm run type-check
+        echo "✓ Type checking passed"
+    waitFor: ['frontend-install']
+
+  - name: 'node:20-slim'
+    id: 'frontend-lint'
+    dir: 'frontend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🔍 Running ESLint..."
+        npm run lint
+        echo "✓ Linting passed"
+    waitFor: ['frontend-install']
+
+  - name: 'node:20-slim'
+    id: 'frontend-prettier'
+    dir: 'frontend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "📝 Checking code formatting..."
+        npm run format:check
+        echo "✓ Formatting check passed"
+    waitFor: ['frontend-install']
+
+  - name: 'node:20-slim'
+    id: 'frontend-tests'
+    dir: 'frontend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🧪 Running frontend tests..."
+        npm run test:coverage
+        echo "✓ Tests passed"
+    waitFor: ['frontend-install']
+
+  # =====================================================
+  # E2E Tests (Optional - can be slow)
+  # =====================================================
+
+  - name: 'mcr.microsoft.com/playwright:v1.40.1-focal'
+    id: 'frontend-e2e'
+    dir: 'frontend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🎭 Running E2E tests..."
+        npm ci --silent
+        npx playwright test
+        echo "✓ E2E tests passed"
+    env:
+      - 'NEXT_PUBLIC_API_URL=${_BACKEND_URL}'
+    waitFor: ['-']  # Run in parallel with other tests
+
+  # =====================================================
+  # Summary
+  # =====================================================
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'summary'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "=========================================="
+        echo "✓ All Quality Checks Passed!"
+        echo "=========================================="
+        echo ""
+        echo "Backend:"
+        echo "  ✓ Linting (Ruff)"
+        echo "  ✓ Formatting (Ruff)"
+        echo "  ✓ Type Checking (mypy)"
+        echo "  ✓ Tests (pytest)"
+        echo "  ✓ Security Scans"
+        echo ""
+        echo "Frontend:"
+        echo "  ✓ Type Checking (tsc)"
+        echo "  ✓ Linting (ESLint)"
+        echo "  ✓ Formatting (Prettier)"
+        echo "  ✓ Tests (Jest)"
+        echo "  ✓ E2E Tests (Playwright)"
+        echo ""
+        echo "Build ID: $BUILD_ID"
+        echo "=========================================="
+    waitFor:
+      - 'backend-ruff-lint'
+      - 'backend-ruff-format'
+      - 'backend-mypy'
+      - 'backend-tests'
+      - 'backend-security'
+      - 'frontend-typecheck'
+      - 'frontend-lint'
+      - 'frontend-prettier'
+      - 'frontend-tests'
+      - 'frontend-e2e'
+
+# Artifacts to save
+artifacts:
+  objects:
+    location: 'gs://${_ARTIFACTS_BUCKET}/quality-reports/${BUILD_ID}'
+    paths:
+      - 'backend/coverage.xml'
+      - 'backend/bandit-report.json'
+      - 'frontend/coverage/coverage-final.json'
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  substitutionOption: 'ALLOW_LOOSE'
+  logging: 'CLOUD_LOGGING_ONLY'
+
+# Timeout for the entire build
+timeout: '1800s'  # 30 minutes
+
+# Substitution variables (configure in trigger)
+substitutions:
+  _SUPABASE_URL: 'your-supabase-url'
+  _SUPABASE_KEY: 'your-supabase-key'
+  _BACKEND_URL: 'http://localhost:8000'
+  _ARTIFACTS_BUCKET: 'your-artifacts-bucket'

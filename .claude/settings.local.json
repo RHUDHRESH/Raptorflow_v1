@@ -9,7 +9,10 @@
       "Bash(done)",
       "Bash(cat C:/Users/hp/OneDrive/Desktop/Raptorflow_v1/INTEGRATION_SUMMARY.txt)",
       "Bash(find backend/tools -name \"*.py\" -type f -exec wc -l {} +)",
-      "Bash(find backend/agents -name \"*.py\" -type f -exec wc -l {} +)"
+      "Bash(find backend/agents -name \"*.py\" -type f -exec wc -l {} +)",
+      "Bash(cat \"C:/Users/hp/OneDrive/Desktop/Raptorflow_v1/backend/requirements-dev.txt\")",
+      "Bash(chmod +x \"C:/Users/hp/OneDrive/Desktop/Raptorflow_v1/scripts/run-quality-checks.sh\")",
+      "Bash(python -m alembic revision --autogenerate -m \"Initial schema with auth, billing, and threat intel models\")"
     ],
     "deny": [],
     "ask": []

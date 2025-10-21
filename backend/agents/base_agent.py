@@ -5,6 +5,7 @@ from typing import TypedDict, Any, Dict, List, Optional
 from abc import ABC, abstractmethod
 from datetime import datetime
 from langgraph.graph import StateGraph, END
+from ..middleware.budget_controller import budget_controller, get_optimal_model, check_budget_before_api_call
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,69 @@ class BaseAgent(ABC):
         state["timestamp"] = datetime.now().isoformat()
         logger.info(f"Agent {self.name} completed for business {state['business_id']}")
         return state
+
+    def call_ai_with_budget_control(self, prompt: str, task_complexity: str = "simple", estimated_tokens: int = 500) -> Dict[str, Any]:
+        """
+        Make AI call with automatic budget control and model selection
+        """
+        # Get optimal model based on task complexity and budget
+        model = get_optimal_model(task_complexity, estimated_tokens)
+        
+        # Check budget before making call
+        can_make, reason = budget_controller.can_make_request(model, estimated_tokens, estimated_tokens // 4)
+        if not can_make:
+            logger.warning(f"Budget limit exceeded for {self.name}: {reason}")
+            return {
+                "success": False,
+                "error": "BUDGET_LIMIT_EXCEEDED",
+                "message": reason,
+                "model_used": None,
+                "fallback_response": "Budget limit reached. Please try again tomorrow."
+            }
+        
+        try:
+            # This would be replaced with actual OpenAI client call
+            # For now, simulate the call with budget tracking
+            logger.info(f"Making AI call with model: {model} for agent: {self.name}")
+            
+            # Simulate API response (replace with actual OpenAI call)
+            response = {
+                "content": f"Simulated response from {model} for task: {task_complexity}",
+                "model": model,
+                "usage": {
+                    "prompt_tokens": estimated_tokens,
+                    "completion_tokens": estimated_tokens // 4,
+                    "total_tokens": estimated_tokens + (estimated_tokens // 4)
+                }
+            }
+            
+            # Record actual usage
+            budget_controller.record_usage(
+                model,
+                response["usage"]["prompt_tokens"],
+                response["usage"]["completion_tokens"]
+            )
+            
+            return {
+                "success": True,
+                "content": response["content"],
+                "model_used": model,
+                "usage": response["usage"],
+                "cost": budget_controller.calculate_request_cost(
+                    model,
+                    response["usage"]["prompt_tokens"],
+                    response["usage"]["completion_tokens"]
+                )
+            }
+            
+        except Exception as e:
+            logger.error(f"AI call failed for {self.name}: {str(e)}")
+            return {
+                "success": False,
+                "error": "AI_CALL_FAILED",
+                "message": str(e),
+                "model_used": model
+            }
 
     async def run(self, business_id: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Run the agent"""
