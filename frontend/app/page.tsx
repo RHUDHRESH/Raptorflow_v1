@@ -1,228 +1,325 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
-import { ImagePlaceholder } from '@/components/ui/ImagePlaceholder';
-import { staggerContainer, fadeInUp } from '@/components/animations/variants';
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/Button'
 
-export default function IntakePage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    industry: '',
-    location: '',
-    description: '',
-    goals: ''
-  });
+export default function HomePage() {
+  const [scrolled, setScrolled] = useState(false)
+  const [activeTab, setActiveTab] = useState('research')
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const response = await fetch('/api/intake', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        localStorage.setItem('business_id', data.business_id);
-        router.push('/dashboard');
-      }
-    } catch (error) {
-      console.error('Error submitting intake form:', error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
     }
-  };
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Hero Section */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
-        {/* Background Image Placeholder */}
-        <div className="absolute inset-0 opacity-40">
-          <ImagePlaceholder
-            src="/images/hero-bg.jpg"
-            alt="Hero background"
-            aspectRatio="aspect-[16/9]"
-            className="w-full h-full"
-          />
-        </div>
-
-        {/* Content */}
-        <motion.div
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-          className="relative z-10 text-center max-w-4xl mx-auto px-6"
-        >
-          <motion.div variants={fadeInUp}>
-            <h1 className="text-display text-whiterock mb-6">
-              mist over black sand
-            </h1>
-            <p className="text-body text-secondary max-w-2xl mx-auto mb-12">
-              ai-powered marketing strategy that adapts. positioning, personas, content built on ries &amp; trout principles.
-            </p>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} className="flex items-center justify-center gap-4">
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => document.getElementById('intake-form')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              start building
-            </Button>
-            <Button variant="ghost" size="lg">
-              watch demo
-            </Button>
-          </motion.div>
-        </motion.div>
-
-        {/* Scroll Indicator */}
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <svg className="w-6 h-6 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </motion.div>
-      </section>
-
-      {/* Intake Form */}
-      <section id="intake-form" className="py-24 px-6">
-        <div className="max-w-2xl mx-auto">
-          <Card className="p-8">
-            <h2 className="text-h1 text-whiterock mb-2">tell us about your business</h2>
-            <p className="text-secondary mb-8">we&apos;ll analyze your market and build your strategy</p>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <Input
-                label="business name"
-                placeholder="acme inc."
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-
-              <Input
-                label="industry"
-                placeholder="saas, retail, consulting..."
-                value={formData.industry}
-                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                required
-              />
-
-              <Input
-                label="location"
-                placeholder="chennai, india"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                required
-              />
-
-              <Textarea
-                label="what do you do?"
-                placeholder="describe your product or service in 2-3 sentences"
-                rows={4}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                required
-              />
-
-              <Textarea
-                label="what are your goals?"
-                placeholder="e.g., generate 100 leads/month, increase brand awareness..."
-                rows={3}
-                value={formData.goals}
-                onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
-                required
-              />
-
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="typing-dot animate-dots" />
-                    <span className="typing-dot animate-dots-delay-1" />
-                    <span className="typing-dot animate-dots-delay-2" />
-                  </span>
-                ) : (
-                  'start research'
-                )}
+    <div className="min-h-screen bg-gradient-to-br from-mine via-mine to-black">
+      {/* Header */}
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? 'bg-mine/90 backdrop-blur-md border-b border-hairline' : ''
+      }`}>
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-10 h-10 bg-barley rounded-lg flex items-center justify-center">
+                <span className="text-whiterock font-bold text-xl">R</span>
+              </div>
+              <span className="text-whiterock font-display text-xl">RaptorFlow</span>
+            </div>
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="#features" className="text-ink hover:text-akaroa transition-colors">Features</a>
+              <a href="#pricing" className="text-ink hover:text-akaroa transition-colors">Pricing</a>
+              <a href="#how-it-works" className="text-ink hover:text-akaroa transition-colors">How It Works</a>
+              <Button variant="primary" className="btn-primary">
+                Get Started
               </Button>
-            </form>
-          </Card>
+            </nav>
+          </div>
+        </div>
+      </header>
 
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
-            {[
-              { icon: '', title: 'research', desc: 'sostac + competitive analysis' },
-              { icon: '', title: 'positioning', desc: 'find your unique word' },
-              { icon: '', title: 'execution', desc: 'calendar + performance tracking' }
-            ].map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 + 0.3 }}
-              >
-                <Card className="p-6 text-center" hover>
-                  <div className="text-4xl mb-4">{feature.icon}</div>
-                  <h3 className="text-h2 text-whiterock mb-2">{feature.title}</h3>
-                  <p className="text-muted text-sm">{feature.desc}</p>
-                </Card>
-              </motion.div>
-            ))}
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-barley/5 to-transparent" />
+        <div className="container mx-auto text-center relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="font-display text-5xl md:text-7xl font-bold text-whiterock mb-6 animate-floatIn">
+              AI-Powered Marketing
+              <span className="block text-barley">Intelligence</span>
+            </h1>
+            <p className="text-xl text-ink/80 mb-8 max-w-2xl mx-auto leading-relaxed animate-floatIn" style={{ animationDelay: '0.2s' }}>
+              Transform your marketing strategy with AI-powered insights, automated campaigns, 
+              and real-time analytics. Get professional results at startup-friendly costs.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-floatIn" style={{ animationDelay: '0.4s' }}>
+              <Button variant="primary" className="btn-primary px-8 py-4 text-lg">
+                Start Free Trial
+              </Button>
+              <Button variant="ghost" className="btn-ghost px-8 py-4 text-lg">
+                Watch Demo
+              </Button>
+            </div>
+            
+            {/* Budget Badge */}
+            <div className="mt-8 inline-flex items-center space-x-2 bg-barley/20 rounded-full px-4 py-2 animate-floatIn" style={{ animationDelay: '0.6s' }}>
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-whiterock text-sm">Starting at just $10/month</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Gallery Section - Image Placeholders */}
-      <section className="py-24 px-6 bg-[color:rgba(255,255,255,.01)]">
-        <div className="max-w-content mx-auto">
-          <h2 className="text-h1 text-whiterock text-center mb-4">built on proven frameworks</h2>
-          <p className="text-secondary text-center mb-12 max-w-2xl mx-auto">
-            ries &amp; trout positioning laws, sostac planning, amec measurement
-          </p>
+      {/* Features Section */}
+      <section id="features" className="py-20 px-6">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-whiterock mb-4">
+              Everything You Need to Scale
+            </h2>
+            <p className="text-xl text-ink/70 max-w-2xl mx-auto">
+              Professional marketing tools that adapt to your business needs
+            </p>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <ImagePlaceholder
-                  src={`/images/gallery-${i}.jpg`}
-                  alt={`Framework visualization ${i}`}
-                  aspectRatio="aspect-square"
-                  caption={`framework ${i}`}
-                  className="hover:scale-103 transition-transform duration-300"
-                />
-              </motion.div>
-            ))}
+          {/* Feature Tabs */}
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-4 mb-12">
+              {['research', 'positioning', 'icp', 'campaigns', 'analytics'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-6 py-3 rounded-lg capitalize transition-all ${
+                    activeTab === tab 
+                      ? 'bg-barley text-whiterock' 
+                      : 'bg-panel text-ink hover:bg-barley/20'
+                  }`}
+                >
+                  {tab === 'icp' ? 'Ideal Customers' : tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Feature Content */}
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                <h3 className="font-display text-3xl font-bold text-whiterock">
+                  {activeTab === 'research' && 'Market Intelligence'}
+                  {activeTab === 'positioning' && 'Strategic Positioning'}
+                  {activeTab === 'icp' && 'Customer Profiles'}
+                  {activeTab === 'campaigns' && 'Campaign Automation'}
+                  {activeTab === 'analytics' && 'Performance Analytics'}
+                </h3>
+                <p className="text-ink/80 leading-relaxed">
+                  {activeTab === 'research' && 'Get comprehensive market analysis, competitor insights, and trend identification powered by AI. Understand your landscape with data-driven intelligence.'}
+                  {activeTab === 'positioning' && 'Develop compelling positioning strategies that resonate with your target audience. Stand out in crowded markets with unique value propositions.'}
+                  {activeTab === 'icp' && 'Create detailed ideal customer profiles with psychographics, behaviors, and preferences. Know exactly who you\'re targeting and why.'}
+                  {activeTab === 'campaigns' && 'Launch automated marketing campaigns across multiple channels. AI-optimized content and timing for maximum engagement.'}
+                  {activeTab === 'analytics' && 'Track performance, measure ROI, and get actionable insights. Real-time analytics help you optimize continuously.'}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {activeTab === 'research' && ['Competitor Analysis', 'Market Trends', 'Opportunity Identification'].map((tag) => (
+                    <span key={tag} className="px-3 py-1 bg-barley/20 rounded-full text-sm text-whiterock">{tag}</span>
+                  ))}
+                  {activeTab === 'positioning' && ['Value Proposition', 'Brand Strategy', 'Market Differentiation'].map((tag) => (
+                    <span key={tag} className="px-3 py-1 bg-barley/20 rounded-full text-sm text-whiterock">{tag}</span>
+                  ))}
+                  {activeTab === 'icp' && ['Demographics', 'Psychographics', 'Behavior Patterns'].map((tag) => (
+                    <span key={tag} className="px-3 py-1 bg-barley/20 rounded-full text-sm text-whiterock">{tag}</span>
+                  ))}
+                  {activeTab === 'campaigns' && ['Multi-Channel', 'AI Content', 'Automation'].map((tag) => (
+                    <span key={tag} className="px-3 py-1 bg-barley/20 rounded-full text-sm text-whiterock">{tag}</span>
+                  ))}
+                  {activeTab === 'analytics' && ['Real-Time Data', 'ROI Tracking', 'Predictive Insights'].map((tag) => (
+                    <span key={tag} className="px-3 py-1 bg-barley/20 rounded-full text-sm text-whiterock">{tag}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="card p-8 h-96 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-barley/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <span className="text-3xl">📊</span>
+                  </div>
+                  <p className="text-ink/70">Interactive Demo</p>
+                  <p className="text-sm text-ink/50 mt-2">Experience the power of AI</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 px-6 bg-gradient-to-b from-transparent to-barley/5">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-whiterock mb-4">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-xl text-ink/70 max-w-2xl mx-auto">
+              Professional marketing tools that fit your budget
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Basic Plan */}
+            <div className="card p-8 relative">
+              <h3 className="font-display text-2xl font-bold text-whiterock mb-2">Basic</h3>
+              <div className="text-3xl font-bold text-barley mb-6">$10<span className="text-lg text-ink/70">/month</span></div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  3 ICPs
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  5 Campaigns/month
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  Basic Analytics
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  Email Support
+                </li>
+              </ul>
+              <Button variant="primary" className="btn-primary w-full">Get Started</Button>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="card p-8 relative border-barley/50">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-barley text-whiterock px-4 py-1 rounded-full text-sm">
+                Most Popular
+              </div>
+              <h3 className="font-display text-2xl font-bold text-whiterock mb-2">Pro</h3>
+              <div className="text-3xl font-bold text-barley mb-6">$25<span className="text-lg text-ink/70">/month</span></div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  6 ICPs
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  15 Campaigns/month
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  Advanced Analytics
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  Priority Support
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  Custom Integrations
+                </li>
+              </ul>
+              <Button variant="primary" className="btn-primary w-full">Get Started</Button>
+            </div>
+
+            {/* Enterprise Plan */}
+            <div className="card p-8 relative">
+              <h3 className="font-display text-2xl font-bold text-whiterock mb-2">Enterprise</h3>
+              <div className="text-3xl font-bold text-barley mb-6">$50<span className="text-lg text-ink/70">/month</span></div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  Unlimited ICPs
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  Unlimited Campaigns
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  Premium Analytics
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  Dedicated Support
+                </li>
+                <li className="flex items-center text-ink/80">
+                  <span className="w-5 h-5 bg-barley rounded-full mr-3"></span>
+                  White-label Options
+                </li>
+              </ul>
+              <Button variant="ghost" className="btn-ghost w-full">Contact Sales</Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-6">
+        <div className="container mx-auto text-center">
+          <div className="card p-12 max-w-4xl mx-auto">
+            <h2 className="font-display text-4xl font-bold text-whiterock mb-4">
+              Ready to Transform Your Marketing?
+            </h2>
+            <p className="text-xl text-ink/80 mb-8">
+              Join thousands of businesses using AI to scale their marketing efforts
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button variant="primary" className="btn-primary px-8 py-4 text-lg">
+                Start Free Trial
+              </Button>
+              <Button variant="ghost" className="btn-ghost px-8 py-4 text-lg">
+                Schedule Demo
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-hairline py-12 px-6">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-barley rounded-lg flex items-center justify-center">
+                  <span className="text-whiterock font-bold">R</span>
+                </div>
+                <span className="text-whiterock font-display text-lg">RaptorFlow</span>
+              </div>
+              <p className="text-ink/60 text-sm">
+                AI-powered marketing intelligence for modern businesses.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-whiterock font-semibold mb-4">Product</h4>
+              <ul className="space-y-2 text-ink/60 text-sm">
+                <li><a href="#" className="hover:text-akaroa transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-akaroa transition-colors">Pricing</a></li>
+                <li><a href="#" className="hover:text-akaroa transition-colors">API</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-whiterock font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-ink/60 text-sm">
+                <li><a href="#" className="hover:text-akaroa transition-colors">About</a></li>
+                <li><a href="#" className="hover:text-akaroa transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-akaroa transition-colors">Careers</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-whiterock font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-ink/60 text-sm">
+                <li><a href="#" className="hover:text-akaroa transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-akaroa transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-akaroa transition-colors">Status</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-hairline pt-8 text-center text-ink/60 text-sm">
+            <p>&copy; 2024 RaptorFlow. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
-  );
+  )
 }
