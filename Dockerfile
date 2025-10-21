@@ -55,13 +55,16 @@ WORKDIR /app
 COPY frontend/package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy frontend code
 COPY frontend/ .
 
 # Build frontend
 RUN npm run build
+
+# Remove dev dependencies after build to slim image
+RUN npm prune --omit=dev
 
 # Production stage - Nginx serving frontend + backend
 FROM nginx:alpine as production
@@ -82,12 +85,17 @@ RUN apk add --no-cache curl
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
+# Runtime configuration
+ENV PORT=8080 \
+    BACKEND_PORT=8000 \
+    ENVIRONMENT=production
+
 # Expose ports
-EXPOSE 80 8000
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
+    CMD sh -c 'curl -f http://127.0.0.1:${PORT:-8080}/health || exit 1'
 
 # Start both services
 CMD ["/start.sh"]

@@ -56,15 +56,11 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Run with gunicorn for production
-# Workers = (2 x CPU cores) + 1, but Cloud Run limits memory
-CMD exec gunicorn app.main:app \
-    --bind 0.0.0.0:${PORT} \
+# Run with uvicorn directly for FastAPI
+# main.py is at /app/main.py, app variable is defined there
+CMD exec uvicorn main:app \
+    --host 0.0.0.0 \
+    --port ${PORT} \
     --workers 2 \
-    --threads 4 \
-    --worker-class uvicorn.workers.UvicornWorker \
-    --timeout 60 \
-    --keep-alive 5 \
-    --access-logfile - \
-    --error-logfile - \
+    --timeout-keep-alive 5 \
     --log-level info

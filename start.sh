@@ -1,82 +1,73 @@
 #!/bin/sh
 
-# Startup script for RaptorFlow production deployment
-# Starts both nginx (frontend) and Python backend
+# Startup script for combined RaptorFlow deployment (backend + frontend).
+# Designed for Google Cloud Run and other container platforms.
 
-set -e
+set -eu
 
-echo "🚀 Starting RaptorFlow Production Deployment..."
+PORT="${PORT:-8080}"
+BACKEND_PORT="${BACKEND_PORT:-8000}"
+BACKEND_HEALTH_PATH="${BACKEND_HEALTH_PATH:-/health}"
+FRONTEND_HEALTH_PATH="${FRONTEND_HEALTH_PATH:-/health}"
+BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://127.0.0.1:${BACKEND_PORT}${BACKEND_HEALTH_PATH}}"
+FRONTEND_HEALTH_URL="${FRONTEND_HEALTH_URL:-http://127.0.0.1:${PORT}${FRONTEND_HEALTH_PATH}}"
+STARTUP_TIMEOUT="${STARTUP_TIMEOUT:-60}"
 
-# Function to check if service is healthy
-check_health() {
-    local service_url=$1
-    local max_attempts=30
-    local attempt=1
-    
-    echo "🔍 Checking health of $service_url..."
-    
-    while [ $attempt -le $max_attempts ]; do
-        if curl -f -s "$service_url" > /dev/null; then
-            echo "✅ $service_url is healthy"
-            return 0
-        fi
-        
-        echo "⏳ Attempt $attempt/$max_attempts - $service_url not ready yet..."
-        sleep 2
-        attempt=$((attempt + 1))
-    done
-    
-    echo "❌ $service_url failed health check after $max_attempts attempts"
-    return 1
+log() {
+    printf '%s %s\n' "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$*"
 }
 
-# Start Python backend in background
-echo "🐍 Starting Python backend..."
+wait_for_service() {
+    service_url="$1"
+    timeout_seconds="$2"
+    elapsed=0
+
+    while ! curl -fsS "$service_url" >/dev/null 2>&1; do
+        if [ "$elapsed" -ge "$timeout_seconds" ]; then
+            log "Service check failed for ${service_url} after ${timeout_seconds}s"
+            return 1
+        fi
+        sleep 2
+        elapsed=$((elapsed + 2))
+    done
+
+    log "Service healthy at ${service_url}"
+    return 0
+}
+
+log "Starting RaptorFlow services (PORT=${PORT}, BACKEND_PORT=${BACKEND_PORT})"
+
+# Start Python backend
 cd /backend
-python main.py &
+log "Booting FastAPI backend..."
+ENVIRONMENT="${ENVIRONMENT:-production}" PORT="$BACKEND_PORT" python main.py &
 BACKEND_PID=$!
 
-# Wait for backend to be healthy
-echo "⏳ Waiting for backend to start..."
-sleep 5
-
-# Check backend health
-if ! check_health "http://localhost:8000/health"; then
-    echo "❌ Backend failed to start properly"
-    exit 1
-fi
-
-# Start nginx in foreground
-echo "🌐 Starting nginx frontend..."
-nginx -g 'daemon off;' &
-NGINX_PID=$!
-
-# Wait a moment for nginx to start
-sleep 2
-
-# Check overall health
-if ! check_health "http://localhost/health"; then
-    echo "❌ Overall health check failed"
-    kill $BACKEND_PID $NGINX_PID
-    exit 1
-fi
-
-echo "✅ RaptorFlow is running successfully!"
-echo "📊 Backend: http://localhost:8000"
-echo "🌐 Frontend: http://localhost"
-echo "💰 Budget Controller: Active"
-echo "🤖 AI Agents: GPT-5 Nano + GPT-5"
-
-# Function to handle shutdown
 shutdown() {
-    echo "🛑 Shutting down RaptorFlow..."
-    kill $BACKEND_PID $NGINX_PID
-    echo "✅ Shutdown complete"
+    log "Shutting down services…"
+    kill "$BACKEND_PID" "$NGINX_PID" 2>/dev/null || true
+    wait "$BACKEND_PID" 2>/dev/null || true
+    wait "$NGINX_PID" 2>/dev/null || true
+    log "Shutdown complete"
     exit 0
 }
 
-# Trap signals for graceful shutdown
-trap shutdown TERM INT
+trap shutdown INT TERM
 
-# Wait for processes
-wait $BACKEND_PID $NGINX_PID
+if ! wait_for_service "$BACKEND_HEALTH_URL" "$STARTUP_TIMEOUT"; then
+    log "Backend failed to become healthy"
+    kill "$BACKEND_PID" 2>/dev/null || true
+    exit 1
+fi
+
+log "Starting nginx frontend reverse proxy..."
+nginx -g 'daemon off;' &
+NGINX_PID=$!
+
+if ! wait_for_service "$FRONTEND_HEALTH_URL" "$STARTUP_TIMEOUT"; then
+    log "Frontend failed health check"
+    shutdown
+fi
+
+log "RaptorFlow is up and serving traffic"
+wait "$BACKEND_PID" "$NGINX_PID"

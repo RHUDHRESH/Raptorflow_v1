@@ -1,14 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export',
-  trailingSlash: true,
-  distDir: 'out',
-  images: {
-    unoptimized: true
+  // Use standalone output for Cloud Run deployment
+  output: 'standalone',
+  // Enable experimental serverComponentsExternalPackages if needed
+  experimental: {
+    serverComponentsExternalPackages: [],
   },
-  assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
-  basePath: process.env.NODE_ENV === 'production' ? '' : ''
+  images: {
+    domains: [],
+    remotePatterns: [],
+  },
+  // Environment variables
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  },
 };
 
 module.exports = nextConfig;
