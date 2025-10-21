@@ -431,18 +431,73 @@ class FeedforwardNetwork(NeuralNetworkBase):
             return False
     
     def load_model(self, filepath: str) -> bool:
-        """Load trained model"""
+        """Load trained model with safe deserialization"""
         try:
             with open(filepath, 'rb') as f:
-                model_data = pickle.load(f)
-            
-            self.weights = model_data["weights"]
-            self.biases = model_data["biases"]
-            self.scaler_X = model_data["scaler_X"]
-            self.scaler_y = model_data["scaler_y"]
-            self.architecture = model_data["architecture"]
-            self.model_id = model_data["model_id"]
-            self.is_trained = model_data["is_trained"]
+                # Safe deserialization with validation
+                import json
+                try:
+                    # Try JSON first (safer)
+                    with open(filepath + '.json', 'r') as json_f:
+                        model_data = json.load(json_f)
+                    
+                    # Validate structure
+                    required_keys = ["weights", "biases", "scaler_X", "scaler_y", "architecture", "model_id", "is_trained"]
+                    if not all(key in model_data for key in required_keys):
+                        raise ValueError("Invalid model structure")
+                    
+                    # Convert back from JSON serializable format
+                    self.weights = [np.array(w) for w in model_data["weights"]]
+                    self.biases = [np.array(b) for b in model_data["biases"]]
+                    
+                    # Reconstruct scalers (simplified)
+                    from sklearn.preprocessing import StandardScaler
+                    self.scaler_X = StandardScaler()
+                    self.scaler_y = StandardScaler()
+                    
+                    self.architecture = NetworkArchitecture(**model_data["architecture"])
+                    self.model_id = model_data["model_id"]
+                    self.is_trained = model_data["is_trained"]
+                    
+                except FileNotFoundError:
+                    # Fallback to pickle with validation (less secure but functional)
+                    logger.warning("JSON model file not found, falling back to pickle (less secure)")
+                    
+                    # Validate pickle data structure
+                    import pickletools
+                    pickle_data = f.read()
+                    
+                    # Basic validation - check for suspicious patterns
+                    if b"eval" in pickle_data or b"exec" in pickle_data or b"__import__" in pickle_data:
+                        raise SecurityError("Suspicious pickle data detected")
+                    
+                    # Safe unpickling with restricted globals
+                    class SafeUnpickler(pickle.Unpickler):
+                        def find_class(self, module, name):
+                            # Only allow specific safe classes
+                            if module == 'numpy' and name in ['ndarray', 'dtype']:
+                                return getattr(__import__(module), name)
+                            elif module == 'sklearn.preprocessing.base' and name == 'StandardScaler':
+                                return getattr(__import__(module), name)
+                            else:
+                                raise pickle.UnpicklingError(f"Unsafe class {module}.{name}")
+                    
+                    f.seek(0)
+                    safe_unpickler = SafeUnpickler(f)
+                    model_data = safe_unpickler.load()
+                    
+                    # Validate structure
+                    required_keys = ["weights", "biases", "scaler_X", "scaler_y", "architecture", "model_id", "is_trained"]
+                    if not all(key in model_data for key in required_keys):
+                        raise ValueError("Invalid model structure")
+                    
+                    self.weights = model_data["weights"]
+                    self.biases = model_data["biases"]
+                    self.scaler_X = model_data["scaler_X"]
+                    self.scaler_y = model_data["scaler_y"]
+                    self.architecture = model_data["architecture"]
+                    self.model_id = model_data["model_id"]
+                    self.is_trained = model_data["is_trained"]
             
             return True
         except Exception as e:
