@@ -14,7 +14,9 @@
       "Bash(chmod +x \"C:/Users/hp/OneDrive/Desktop/Raptorflow_v1/scripts/run-quality-checks.sh\")",
       "Bash(python -m alembic revision --autogenerate -m \"Initial schema with auth, billing, and threat intel models\")",
       "Bash(cat:*)",
-      "Bash(python3 -m pip:*)"
+      "Bash(python3 -m pip:*)",
+      "Bash(python -m pip install:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []
