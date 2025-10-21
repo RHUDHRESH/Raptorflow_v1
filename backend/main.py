@@ -49,6 +49,9 @@ from agents.trend_monitor import trend_monitor
 from utils.supabase_client import get_supabase_client
 from utils.razorpay_client import get_razorpay_client
 
+# Import budget controller API routes
+from api.budget_routes import router as budget_router
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -94,6 +97,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
 )
+
+# Include budget controller API routes
+app.include_router(budget_router, prefix="/api/budget", tags=["budget"])
 
 supabase = get_supabase_client()
 razorpay = get_razorpay_client()
