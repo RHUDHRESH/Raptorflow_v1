@@ -5514,7 +5514,7 @@ client = Client(api_key=os.getenv('LANGSMITH_API_KEY'))
 ## **User Journey: From Sign-Up to Campaign**
 ```
 DAY 0: SIGN UP
-User lands on raptorflow.com
+User lands on raptorflow.in
   → Clicks "Start Free Trial"
   → Fills intake form (business details)
   → Orchestrator receives, delegates to Research Agent
@@ -17172,8 +17172,8 @@ MIT
 
 ## Support
 
-- Email: support@raptorflow.com
-- Docs: https://docs.raptorflow.com
+- Email: support@raptorflow.in
+- Docs: https://docs.raptorflow.in
 
 🎉 THAT'S EVERYTHING!
 You now have:

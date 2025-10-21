@@ -89,19 +89,19 @@ class TestAISafetyMiddleware:
     async def test_sanitize_output(self):
         """Test output sanitization"""
         malicious_output = """
-        Contact us at admin@raptorflow.com or call 1234-5678-9012-3456
+        Contact us at admin@raptorflow.in or call 1234-5678-9012-3456
         Your API key is sk-1234567890abcdef1234567890abcdef12345678
-        Internal API endpoint: https://api.internal.raptorflow.com/admin
+        Internal API endpoint: https://api.internal.raptorflow.in/admin
         """
-        
+
         sanitized = await self.ai_safety.sanitize_output(malicious_output)
-        
+
         # Check that sensitive data is redacted
         assert "[REDACTED]" in sanitized
-        assert "admin@raptorflow.com" not in sanitized
+        assert "admin@raptorflow.in" not in sanitized
         assert "1234-5678-9012-3456" not in sanitized
         assert "sk-1234567890abcdef" not in sanitized
-        assert "api.internal.raptorflow.com" not in sanitized
+        assert "api.internal.raptorflow.in" not in sanitized
     
     @pytest.mark.asyncio
     async def test_length_validation(self):
