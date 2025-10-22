@@ -1,0 +1,546 @@
+/**
+ * Global Animation Styles
+ * Optimized CSS animations and transitions
+ */
+
+/* =============================================================================
+   FADE ANIMATIONS
+   ============================================================================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.2s ease-in forwards;
+}
+
+/* =============================================================================
+   SCALE ANIMATIONS
+   ============================================================================= */
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+.scale-out {
+  animation: scaleOut 0.2s ease-in forwards;
+}
+
+/* =============================================================================
+   SLIDE ANIMATIONS
+   ============================================================================= */
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.3s ease-out forwards;
+}
+
+.slide-in-down {
+  animation: slideInDown 0.3s ease-out forwards;
+}
+
+.slide-in-up {
+  animation: slideInUp 0.3s ease-out forwards;
+}
+
+.slide-out-right {
+  animation: slideOutRight 0.2s ease-in forwards;
+}
+
+.slide-out-left {
+  animation: slideOutLeft 0.2s ease-in forwards;
+}
+
+/* =============================================================================
+   BOUNCE ANIMATIONS
+   ============================================================================= */
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.bounce {
+  animation: bounce 1s infinite;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+.shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    90deg,
+    #e0e0e0 25%,
+    #f0f0f0 50%,
+    #e0e0e0 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* =============================================================================
+   ROTATION ANIMATIONS
+   ============================================================================= */
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rotateReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.rotate {
+  animation: rotate 2s linear infinite;
+}
+
+.rotate-reverse {
+  animation: rotateReverse 2s linear infinite;
+}
+
+/* =============================================================================
+   SHAKE ANIMATIONS
+   ============================================================================= */
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* =============================================================================
+   FLIP ANIMATIONS
+   ============================================================================= */
+
+@keyframes flipIn {
+  from {
+    opacity: 0;
+    transform: rotateY(90deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotateY(0deg);
+  }
+}
+
+@keyframes flipOut {
+  from {
+    opacity: 1;
+    transform: rotateY(0deg);
+  }
+  to {
+    opacity: 0;
+    transform: rotateY(90deg);
+  }
+}
+
+.flip-in {
+  animation: flipIn 0.4s ease-out forwards;
+  perspective: 1000px;
+}
+
+.flip-out {
+  animation: flipOut 0.3s ease-in forwards;
+  perspective: 1000px;
+}
+
+/* =============================================================================
+   TRANSITION CLASSES (For smooth property changes)
+   ============================================================================= */
+
+.transition-fast {
+  transition: all 0.15s ease-out;
+}
+
+.transition-base {
+  transition: all 0.2s ease-out;
+}
+
+.transition-slow {
+  transition: all 0.3s ease-out;
+}
+
+.transition-slower {
+  transition: all 0.5s ease-out;
+}
+
+.transition-opacity-fast {
+  transition: opacity 0.15s ease-out;
+}
+
+.transition-opacity-base {
+  transition: opacity 0.2s ease-out;
+}
+
+.transition-opacity-slow {
+  transition: opacity 0.3s ease-out;
+}
+
+.transition-transform-fast {
+  transition: transform 0.15s ease-out;
+}
+
+.transition-transform-base {
+  transition: transform 0.2s ease-out;
+}
+
+.transition-transform-slow {
+  transition: transform 0.3s ease-out;
+}
+
+.transition-colors-base {
+  transition: color 0.2s ease-out, background-color 0.2s ease-out,
+    border-color 0.2s ease-out;
+}
+
+.transition-shadow-base {
+  transition: box-shadow 0.2s ease-out;
+}
+
+/* =============================================================================
+   UTILITY ANIMATION CLASSES
+   ============================================================================= */
+
+/* Animation Timing */
+.animate-duration-150 {
+  animation-duration: 150ms;
+}
+
+.animate-duration-300 {
+  animation-duration: 300ms;
+}
+
+.animate-duration-500 {
+  animation-duration: 500ms;
+}
+
+.animate-duration-1000 {
+  animation-duration: 1000ms;
+}
+
+/* Animation Fill Mode */
+.animate-fill-forwards {
+  animation-fill-mode: forwards;
+}
+
+.animate-fill-both {
+  animation-fill-mode: both;
+}
+
+/* Animation Direction */
+.animate-reverse {
+  animation-direction: reverse;
+}
+
+.animate-alternate {
+  animation-direction: alternate;
+}
+
+/* =============================================================================
+   HOVER ANIMATIONS
+   ============================================================================= */
+
+.hover-scale {
+  transition: transform 0.2s ease-out;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-lift {
+  transition: all 0.2s ease-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.hover-dim {
+  transition: opacity 0.2s ease-out;
+}
+
+.hover-dim:hover {
+  opacity: 0.7;
+}
+
+.hover-brighten {
+  transition: filter 0.2s ease-out;
+}
+
+.hover-brighten:hover {
+  filter: brightness(1.1);
+}
+
+/* =============================================================================
+   FOCUS ANIMATIONS
+   ============================================================================= */
+
+.focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.focus-ring:focus {
+  outline: 2px solid #a68763;
+  outline-offset: 2px;
+}
+
+.focus-shadow:focus {
+  box-shadow: 0 0 0 3px rgba(166, 135, 99, 0.1);
+}
+
+/* =============================================================================
+   LOADING ANIMATIONS
+   ============================================================================= */
+
+.loading-spinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top: 3px solid #a68763;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  animation: rotate 0.8s linear infinite;
+}
+
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #a68763;
+  animation: bounce 1.4s infinite;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* =============================================================================
+   SCROLLING ANIMATIONS
+   ============================================================================= */
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scroll-animate {
+  opacity: 0;
+  animation: slideUp 0.6s ease-out forwards;
+}
+
+/* =============================================================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================================================= */
+
+/* Use GPU acceleration for better performance */
+.will-animate {
+  will-change: transform, opacity;
+}
+
+.will-animate-transform {
+  will-change: transform;
+}
+
+.will-animate-opacity {
+  will-change: opacity;
+}
+
+/* Disable animations on reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =============================================================================
+   ACCESSIBILITY
+   ============================================================================= */
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  .fade-in {
+    animation-duration: 0.15s;
+  }
+
+  .slide-in-right {
+    animation-duration: 0.15s;
+  }
+
+  .scale-in {
+    animation-duration: 0.15s;
+  }
+}

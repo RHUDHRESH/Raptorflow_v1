@@ -1,4 +1,10 @@
-"""FastAPI main application."""
+"""
+FastAPI main application with mode-aware initialization.
+
+Supports:
+- Dev Mode: Local tools (Ollama, ChromaDB, in-memory cache)
+- Cloud Mode: Cloud services (OpenAI, Supabase, Redis)
+"""
 
 import time
 from contextlib import asynccontextmanager
@@ -11,7 +17,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
-from app.core.redis import redis_client
+from app.core.service_factories import services
+from app.db.session import init_db, close_db
 from app.middleware import (
     StructuredLoggingMiddleware,
     RequestContextMiddleware,
@@ -23,25 +30,63 @@ from app.middleware import (
 setup_logging()
 logger = get_logger(__name__)
 
+# Log the current configuration on startup
+logger.info(settings.log_configuration())
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan handler."""
-    # Startup
-    logger.info("application_starting", version="1.0.0")
+    """Application lifespan handler with mode-aware initialization."""
+    # ========== STARTUP ==========
+    logger.info("application_starting", version="1.0.0", mode=settings.EXECUTION_MODE.value)
 
-    # Test Redis connection
+    # Initialize services based on mode
     try:
-        await redis_client.ping()
-        logger.info("redis_connected")
+        await services.initialize()
+        logger.info("services_initialized", mode=settings.EXECUTION_MODE.value)
     except Exception as e:
-        logger.error("redis_connection_failed", error=str(e))
+        logger.error("services_initialization_failed", error=str(e), exc_info=True)
+        raise
+
+    # Initialize database
+    try:
+        await init_db()
+        logger.info("database_initialized")
+    except Exception as e:
+        logger.error("database_initialization_failed", error=str(e), exc_info=True)
+
+    # Test mode-specific connections
+    if settings.is_cloud_mode:
+        # Cloud mode: Test Redis connection
+        try:
+            await services.cache.get("test_key")
+            logger.info("cache_connected")
+        except Exception as e:
+            logger.error("cache_connection_failed", error=str(e))
+    else:
+        # Dev mode: Services running locally
+        logger.info("dev_mode_services_ready")
+
+    # Log available services
+    logger.info(
+        "services_ready",
+        llm_provider=settings.LLM_PROVIDER.value,
+        embedding_provider=settings.EMBEDDING_PROVIDER.value,
+        vector_db_provider=settings.VECTOR_DB_PROVIDER.value,
+        cache_provider=settings.CACHE_PROVIDER.value,
+    )
 
     yield
 
-    # Shutdown
+    # ========== SHUTDOWN ==========
     logger.info("application_shutting_down")
-    await redis_client.close()
+
+    try:
+        await services.shutdown()
+        await close_db()
+        logger.info("application_shutdown_complete")
+    except Exception as e:
+        logger.error("shutdown_error", error=str(e), exc_info=True)
 
 
 # Create FastAPI app
@@ -242,6 +287,7 @@ async def api_info():
     """API v1 information."""
     return {
         "version": "1.0.0",
+        "mode": settings.EXECUTION_MODE.value,
         "endpoints": {
             "health": "/health",
             "users": "/api/v1/users",
@@ -249,7 +295,44 @@ async def api_info():
             "projects": "/api/v1/projects",
             "indicators": "/api/v1/indicators",
             "payments": "/api/v1/payments",
+            "config": "/api/v1/config",
             "docs": "/docs" if settings.DEBUG else None,
+        },
+    }
+
+
+@app.get("/api/v1/config")
+async def config_info():
+    """Get current configuration (dev mode only)."""
+    if not settings.DEBUG:
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={"error": "Configuration endpoint only available in debug mode"}
+        )
+
+    return {
+        "execution_mode": settings.EXECUTION_MODE.value,
+        "environment": settings.ENVIRONMENT,
+        "debug": settings.DEBUG,
+        "services": {
+            "llm": {
+                "provider": settings.LLM_PROVIDER.value,
+                "model": settings.OLLAMA_MODEL if settings.is_using_ollama else settings.OPENAI_MODEL,
+            },
+            "embeddings": {
+                "provider": settings.EMBEDDING_PROVIDER.value,
+                "model": settings.EMBEDDING_MODEL,
+            },
+            "vector_db": {
+                "provider": settings.VECTOR_DB_PROVIDER.value,
+            },
+            "cache": {
+                "provider": settings.CACHE_PROVIDER.value,
+            },
+        },
+        "features": {
+            "payments_enabled": settings.FEATURE_PAYMENTS_ENABLED,
+            "agents_enabled": settings.FEATURE_AI_AGENTS_ENABLED,
         },
     }
 

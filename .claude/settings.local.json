@@ -16,7 +16,11 @@
       "Bash(cat:*)",
       "Bash(python3 -m pip:*)",
       "Bash(python -m pip install:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(npm test:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

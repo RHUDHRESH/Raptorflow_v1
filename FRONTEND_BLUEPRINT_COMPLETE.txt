@@ -1,0 +1,485 @@
+================================================================================
+              RAPTORFLOW 2.0 - FRONT-END DESIGN BLUEPRINT
+                          COMPLETE & COMPREHENSIVE
+================================================================================
+
+PROJECT OVERVIEW
+================
+
+RaptorFlow 2.0 is a strategy-first marketing operating system that transforms
+messy context into defensible strategy and actionable moves. This comprehensive
+front-end design blueprint provides complete specifications for every page,
+component, interaction, and state in the application.
+
+This blueprint is the source of truth for all design and development work.
+
+
+DELIVERABLES CREATED
+====================
+
+1. FRONTEND_DESIGN_BLUEPRINT.md (~2,500 lines)
+   Complete visual design system and page layouts
+   - Colors, typography, iconography
+   - Grid and spacing system
+   - Navigation architecture
+   - 13+ page layouts
+   - Mobile & responsiveness
+   - Accessibility standards
+   - Performance guidelines
+   - Brand voice & tone
+
+2. COMPONENT_SPECIFICATIONS.md (~1,800 lines)
+   Technical specifications for every reusable component
+   - 25+ component types
+   - CSS specifications
+   - All states (default, hover, active, disabled, loading, error)
+   - Accessibility requirements for each
+   - Code examples
+
+3. PAGE_SPECIFICATIONS.md (~1,500 lines)
+   Page-by-page detailed specifications
+   - Welcome & onboarding (6 pages)
+   - Context intake
+   - Strategy workspace
+   - Move management
+   - Calendar & scheduling
+   - Reports & analytics
+   - Settings & account
+
+Total: ~5,800 lines of comprehensive specifications
+
+
+DESIGN SYSTEM SUMMARY
+====================
+
+Colors (4-color palette):
+  Mineshaft (#2D2D2D) - Primary text, dark accents
+  Akaroa (#D7C9AE) - Main surface background
+  Barleycorn (#A68763) - Action buttons, highlights
+  White Rock (#EAE0D2) - Secondary surfaces, dividers
+
+Typography:
+  Playfair Display SC - Display titles (elegant, sparingly)
+  Inter (variable weights) - Body text and UI
+  JetBrains Mono - Code and tables
+
+Spacing: 8-point grid system
+  xs: 4 px | sm: 8 px | md: 16 px | lg: 24 px | xl: 32 px
+
+Breakpoints:
+  Large: ≥1280 px | Medium: ≥960 px | Small: ≥600 px | Mobile: <600 px
+
+
+COMPONENTS SPECIFIED
+====================
+
+Buttons (5 types):
+  Primary, Secondary, Tertiary, Icon, Loading states
+
+Forms (6 types):
+  Text input, Textarea, Checkbox, Select, Date picker, File input
+
+Data Display (6 types):
+  Cards, Tables, Badges, Progress bars, Charts, Skeleton loaders
+
+Navigation (4 types):
+  Sidebar, Top bar, Chat rail, Tabs, Breadcrumb
+
+Feedback (3 types):
+  Toasts, Modals, Loading indicators
+
+Layout (2 types):
+  Grid (12-column responsive), Flex layouts
+
+Plus: 25+ total component specifications with complete CSS
+
+
+PAGES SPECIFIED
+===============
+
+Onboarding (6 pages):
+  1. Welcome Screen
+  2. Role Selection
+  3. Goal Selection
+  4. Business Details
+  5. Context Intake
+  6. Review & Confirm
+
+Core Features (5 pages):
+  7. Context Intake Page
+  8. Strategy Workspace
+  9. Suggested Moves
+  10. Move Detail
+  11. Calendar View
+
+Analytics & Settings (2 pages):
+  12. Reports Dashboard
+  13. Account Settings
+
+
+KEY FEATURES DOCUMENTED
+=======================
+
+Navigation Shell:
+  - Persistent left sidebar (10 sections)
+  - Global search with real-time results
+  - Notifications dropdown
+  - Profile menu
+  - Persistent chat rail (Profound Mode)
+
+Onboarding Flow:
+  - 6-step guided process
+  - Progress indicator
+  - Back buttons on every step
+  - Real-time validation
+  - Review page before creation
+
+Strategy Workspace:
+  - Jobs section (create, merge, split)
+  - ICP management with avatar editor
+  - Channel map with AISAS slider
+  - Strategy explanations sidebar
+  - Real-time updates
+
+Move Management:
+  - Suggested moves with filtering
+  - Move detail with 3 tabs
+  - Hook Studio with scoring
+  - Packaging checklist
+  - Calendar scheduling
+
+Analytics:
+  - Multiple report tabs
+  - Charts and graphs
+  - Sortable tables
+  - Filterable data
+  - Drill-down capability
+
+
+ACCESSIBILITY FEATURES
+======================
+
+WCAG AA Compliance:
+  - 4.5:1 color contrast
+  - Full keyboard navigation
+  - Visible focus indicators
+  - ARIA labels and landmarks
+  - Semantic HTML
+
+Keyboard Shortcuts:
+  Ctrl+K: Open search
+  Ctrl+Enter: Send chat
+  Ctrl+J: Jump to Jobs
+  Escape: Close modals
+  Tab: Navigate elements
+
+Multimedia:
+  - All videos have captions
+  - All audio has transcripts
+  - YouTube Shorts display full transcript
+
+
+RESPONSIVE DESIGN
+=================
+
+Large (≥1280 px):
+  - Full sidebar (72 px)
+  - Chat rail visible (320 px)
+  - Cards in grid (2-3 per row)
+
+Medium (≥960 px):
+  - Collapsed sidebar (48 px)
+  - Chat as floating button
+  - Cards in grid (2 per row)
+
+Small (≥600 px):
+  - Bottom navigation bar
+  - Single column layout
+  - Chat as drawer
+
+Mobile (<600 px):
+  - Hamburger menu
+  - Full-screen modals
+  - Chat as bottom sheet
+  - 48x48 px touch targets
+
+
+PERFORMANCE TARGETS
+===================
+
+Metrics:
+  LCP: < 2.5 s
+  FID: < 100 ms
+  CLS: < 0.1
+
+Strategies:
+  - Code splitting by route
+  - Lazy loading for modules
+  - Image optimization (WebP/AVIF)
+  - API response caching
+  - Service Worker support
+
+Bundle Size:
+  Main: < 150 KB (gzipped)
+  Route chunks: Auto-split
+  Tree shaking: Enabled
+
+
+BRAND VOICE PRINCIPLES
+======================
+
+Voice:
+  Friendly - Warm, colleague-like tone
+  Confident - Decisive without arrogance
+  Instructive - Clear directions and examples
+  No jargon - Plain language emphasis
+  Positive - Focus on achievements
+
+Tone by Context:
+  Onboarding: Encouraging, excited
+  Errors: Calm, helpful, reassuring
+  Reports: Objective, concise, insightful
+  Notifications: Urgent but not alarmist
+
+
+TECHNOLOGY STACK RECOMMENDATIONS
+=================================
+
+Frontend Framework:
+  React 18+ (component-based)
+  Next.js 14+ (app router, SSR)
+  TypeScript (type safety)
+
+Styling:
+  TailwindCSS (utility-first)
+
+State Management:
+  Zustand or Jotai
+
+Data Management:
+  TanStack Query (fetching & caching)
+  React Hook Form (forms)
+
+Validation:
+  Zod (schema validation)
+
+UI Libraries:
+  Lucide Icons
+  Radix UI (accessible components)
+  Recharts (charts)
+  Framer Motion (animations)
+
+Testing:
+  Playwright (E2E)
+  Jest (unit)
+  Storybook (component dev)
+
+Quality:
+  Lighthouse (performance)
+  Accessibility Inspector (a11y)
+
+
+IMPLEMENTATION ROADMAP
+======================
+
+Phase 1: Design (1-2 weeks)
+  - Create Figma designs from blueprint
+  - User testing and validation
+  - Export component assets
+
+Phase 2: Development (4-6 weeks)
+  - Setup React component library
+  - Implement design tokens
+  - Build core components
+  - Form validation
+  - API integration
+
+Phase 3: Integration (2-3 weeks)
+  - Page templates
+  - Real data integration
+  - Responsive testing
+  - Performance optimization
+  - Accessibility audit
+
+Phase 4: Testing & Refinement (ongoing)
+  - User testing
+  - A/B testing
+  - Performance monitoring
+  - Iteration based on feedback
+
+
+USAGE GUIDE FOR TEAMS
+====================
+
+For Designers:
+  1. Read FRONTEND_DESIGN_BLUEPRINT.md (visual system)
+  2. Reference PAGE_SPECIFICATIONS.md (layouts)
+  3. Use COMPONENT_SPECIFICATIONS.md (details)
+  4. Create Figma designs matching exactly
+
+For Developers:
+  1. Read FRONTEND_DESIGN_BLUEPRINT.md (system)
+  2. Reference COMPONENT_SPECIFICATIONS.md (coding)
+  3. Use PAGE_SPECIFICATIONS.md (structure)
+  4. Follow color, spacing, typography exactly
+
+For Product Managers:
+  1. Read this summary
+  2. Review key pages
+  3. Understand user flows
+  4. Use for prioritization
+
+
+QUICK COLOR REFERENCE
+====================
+
+Mineshaft: #2D2D2D
+Akaroa: #D7C9AE
+Barleycorn: #A68763
+White Rock: #EAE0D2
+
+Buttons:
+  Primary: Barleycorn bg, White Rock text
+  Secondary: Mineshaft border, transparent bg
+  Tertiary: Text only, underlined
+
+Cards:
+  Default: Akaroa bg
+  Hover: Lift effect, shadow increase
+  Selected: Barleycorn border
+
+States:
+  Focus: Barleycorn outline (2 px)
+  Hover: Slightly darker/lighter
+  Disabled: 60% opacity
+  Error: Red text/border
+
+
+QUICK FONT REFERENCE
+===================
+
+Display (Headlines):
+  Font: Playfair Display SC
+  Size: 28 px
+  Weight: Bold
+  Line Height: 34 px
+
+Page Title:
+  Font: Inter
+  Size: 22 px
+  Weight: SemiBold
+  Line Height: 28 px
+
+Section Heading:
+  Font: Inter
+  Size: 18 px
+  Weight: Medium
+  Line Height: 24 px
+
+Body:
+  Font: Inter
+  Size: 15 px
+  Weight: Regular
+  Line Height: 22 px
+
+Small:
+  Font: Inter
+  Size: 13 px
+  Weight: Regular
+  Line Height: 18 px
+
+
+QUICK SPACING REFERENCE
+======================
+
+Container edges: 24 px
+Between elements: 16 px
+Section separators: 32 px (above), 24 px (below)
+Card padding: 16 px inside
+Card margin: 12 px below
+Inline spacing: 8 px (icon + text)
+Between icons: 4 px
+
+
+DOCUMENT FILES
+==============
+
+FRONTEND_DESIGN_BLUEPRINT.md
+  - Main design system and visual guide
+  - 2,500+ lines
+  - Sections: 1-45+
+  - Complete page layouts
+
+COMPONENT_SPECIFICATIONS.md
+  - Technical component reference
+  - 1,800+ lines
+  - 25+ components
+  - CSS specifications
+  - Accessibility per component
+
+PAGE_SPECIFICATIONS.md
+  - Detailed page-by-page layouts
+  - 1,500+ lines
+  - 13+ pages specified
+  - Layout diagrams
+  - Component usage
+
+FRONTEND_BLUEPRINT_COMPLETE.txt
+  - This summary document
+  - Quick reference guide
+  - Implementation roadmap
+
+
+NEXT STEPS
+==========
+
+1. REVIEW: Read all three blueprint documents
+2. DESIGN: Create Figma mockups based on specs
+3. VALIDATE: Test designs with users
+4. DEVELOP: Build React components matching specs
+5. INTEGRATE: Connect to backend APIs
+6. TEST: Ensure accessibility and performance
+7. ITERATE: Refine based on real user feedback
+
+
+CONCLUSION
+==========
+
+This comprehensive front-end design blueprint provides everything needed to
+build a beautiful, accessible, and performant user interface for RaptorFlow 2.0.
+
+Key Principles:
+  Minimalistic design
+  Clear hierarchy
+  Generous white space
+  Interactive feedback
+  Accessibility first
+  Performance optimized
+  Brand consistent
+  Mobile responsive
+
+Every page, component, and interaction has been carefully specified to ensure:
+  - Clarity and usability
+  - Consistency across the product
+  - Accessibility compliance
+  - Performance excellence
+  - Brand alignment
+
+Use these documents as your single source of truth. When building RaptorFlow 2.0,
+reference them constantly to ensure alignment with the vision.
+
+The goal: Make strategy accessible to everyone.
+
+================================================================================
+BLUEPRINT STATUS: COMPLETE & READY FOR IMPLEMENTATION
+
+Total Specifications: ~5,800 lines
+Components: 25+
+Pages: 13+
+Design System: Complete
+Accessibility: WCAG AA
+Mobile: Fully responsive
+Performance: Optimized
+
+Ready to build something amazing!
+================================================================================
