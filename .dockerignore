@@ -1,0 +1,56 @@
+# Build files
+.git/
+.github/
+.gitignore
+.docker/
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Documentation
+README.md
+CLEAN.md
+*.md
+docs/
+
+# Config files
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Cache/temp
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+node_modules/
+.npm/
+.next/
+.swc/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Load tests
+load-tests/

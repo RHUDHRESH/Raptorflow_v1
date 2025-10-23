@@ -1,11 +1,11 @@
-"""Base agent class with common functionality for all agents"""
+"""Base agent class with common functionality for all agents - CLOUD ONLY"""
 import json
 import logging
 from typing import TypedDict, Any, Dict, List, Optional
 from abc import ABC, abstractmethod
 from datetime import datetime
 from langgraph.graph import StateGraph, END
-from ..middleware.budget_controller import budget_controller, get_optimal_model, check_budget_before_api_call
+from ..utils.cloud_provider import get_cloud_provider, AllProvidersFailedError
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +23,14 @@ class AgentState(TypedDict):
 
 
 class BaseAgent(ABC):
-    """Base class for all LangGraph agents"""
+    """Base class for all LangGraph agents - CLOUD ONLY ARCHITECTURE"""
 
     def __init__(self, name: str, description: str):
         self.name = name
         self.description = description
         self.graph = None
         self.app = None
+        self.cloud_provider = get_cloud_provider()
         self._build_graph()
 
     def _build_graph(self):
@@ -106,67 +107,78 @@ class BaseAgent(ABC):
         logger.info(f"Agent {self.name} completed for business {state['business_id']}")
         return state
 
-    def call_ai_with_budget_control(self, prompt: str, task_complexity: str = "simple", estimated_tokens: int = 500) -> Dict[str, Any]:
+    def call_ai(
+        self,
+        prompt: str,
+        task_complexity: str = "moderate",
+        max_tokens: int = 2000,
+        temperature: float = 0.7,
+        **kwargs
+    ) -> Dict[str, Any]:
         """
-        Make AI call with automatic budget control and model selection
+        Make AI call using cloud provider with automatic fallback.
+
+        Cloud-only architecture:
+        - Development mode: Gemini → OpenRouter
+        - Production mode: OpenAI GPT-5 series → OpenRouter
+
+        Args:
+            prompt: The input prompt
+            task_complexity: "simple", "moderate", or "complex"
+            max_tokens: Maximum tokens to generate
+            temperature: Sampling temperature
+            **kwargs: Additional model-specific parameters
+
+        Returns:
+            Dict containing:
+                - success: Boolean
+                - content: Generated text
+                - model_used: Which model was used
+                - provider: Which provider was used
+                - usage: Token usage statistics
         """
-        # Get optimal model based on task complexity and budget
-        model = get_optimal_model(task_complexity, estimated_tokens)
-        
-        # Check budget before making call
-        can_make, reason = budget_controller.can_make_request(model, estimated_tokens, estimated_tokens // 4)
-        if not can_make:
-            logger.warning(f"Budget limit exceeded for {self.name}: {reason}")
+
+        try:
+            logger.info(
+                f"Agent {self.name} making cloud AI call "
+                f"(complexity: {task_complexity}, max_tokens: {max_tokens})"
+            )
+
+            result = self.cloud_provider.generate(
+                prompt=prompt,
+                task_complexity=task_complexity,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                **kwargs
+            )
+
+            if result["success"]:
+                logger.info(
+                    f"Agent {self.name} AI call successful - "
+                    f"Provider: {result['provider']}, Model: {result['model_used']}, "
+                    f"Tokens: {result['usage']['total_tokens']}"
+                )
+
+            return result
+
+        except AllProvidersFailedError as e:
+            logger.error(f"All cloud providers failed for agent {self.name}: {e}")
             return {
                 "success": False,
-                "error": "BUDGET_LIMIT_EXCEEDED",
-                "message": reason,
+                "error": "ALL_PROVIDERS_FAILED",
+                "message": "All configured cloud providers failed. Please check API keys and try again.",
                 "model_used": None,
-                "fallback_response": "Budget limit reached. Please try again tomorrow."
+                "provider": None
             }
-        
-        try:
-            # This would be replaced with actual OpenAI client call
-            # For now, simulate the call with budget tracking
-            logger.info(f"Making AI call with model: {model} for agent: {self.name}")
-            
-            # Simulate API response (replace with actual OpenAI call)
-            response = {
-                "content": f"Simulated response from {model} for task: {task_complexity}",
-                "model": model,
-                "usage": {
-                    "prompt_tokens": estimated_tokens,
-                    "completion_tokens": estimated_tokens // 4,
-                    "total_tokens": estimated_tokens + (estimated_tokens // 4)
-                }
-            }
-            
-            # Record actual usage
-            budget_controller.record_usage(
-                model,
-                response["usage"]["prompt_tokens"],
-                response["usage"]["completion_tokens"]
-            )
-            
-            return {
-                "success": True,
-                "content": response["content"],
-                "model_used": model,
-                "usage": response["usage"],
-                "cost": budget_controller.calculate_request_cost(
-                    model,
-                    response["usage"]["prompt_tokens"],
-                    response["usage"]["completion_tokens"]
-                )
-            }
-            
+
         except Exception as e:
-            logger.error(f"AI call failed for {self.name}: {str(e)}")
+            logger.error(f"Unexpected error in AI call for agent {self.name}: {e}")
             return {
                 "success": False,
                 "error": "AI_CALL_FAILED",
                 "message": str(e),
-                "model_used": model
+                "model_used": None,
+                "provider": None
             }
 
     async def run(self, business_id: str, context: Dict[str, Any]) -> Dict[str, Any]:

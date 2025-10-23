@@ -20,7 +20,10 @@
       "Bash(tree:*)",
       "Bash(find:*)",
       "Bash(npm test:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(docker build:*)",
+      "Bash(awk:*)",
+      "Bash(docker-compose config:*)"
     ],
     "deny": [],
     "ask": []

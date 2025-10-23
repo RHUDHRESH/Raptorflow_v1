@@ -1,17 +1,17 @@
 from typing import TypedDict, Literal, Dict, Any
 from langgraph.graph import StateGraph, END
-from tools.state_manager import StateManagerTool
-from tools.tier_validator import TierValidatorTool
-from utils.supabase_client import get_supabase_client
+from backend.tools.state_manager import StateManagerTool
+from backend.tools.tier_validator import TierValidatorTool
+from backend.utils.supabase_client import get_supabase_client
 import json
 
 # Import specialist agents
-from agents.research import research_agent
-from agents.positioning import positioning_agent
-from agents.icp import icp_agent
-from agents.strategy import strategy_agent
-from agents.content import content_agent
-from agents.analytics import analytics_agent
+from backend.agents.research import research_agent
+from backend.agents.positioning import positioning_agent
+from backend.agents.icp import icp_agent
+from backend.agents.strategy import strategy_agent
+from backend.agents.content import content_agent
+from backend.agents.analytics import analytics_agent
 
 class OrchestratorState(TypedDict):
     business_id: str

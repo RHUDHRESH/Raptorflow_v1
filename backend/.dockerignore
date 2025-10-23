@@ -1,0 +1,44 @@
+# Version control
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Tests
+tests/
+.pytest_cache/
+
+# Unused files
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Dependencies cache
+*.lock.txt

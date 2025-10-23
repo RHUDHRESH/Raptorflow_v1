@@ -23,7 +23,7 @@ else:
 # --- end dotenv bootstrap (phase1.fix.0.6) ---
 
 # Import security middleware
-from middleware.security_middleware import (
+from backend.middleware.security_middleware import (
     SecurityHeadersMiddleware,
     InputValidationMiddleware,
     AuthenticationMiddleware,
@@ -37,20 +37,20 @@ from middleware.security_middleware import (
 )
 
 # Import agents
-from agents.orchestrator import orchestrator
-from agents.research import research_agent
-from agents.positioning import positioning_agent
-from agents.icp import icp_agent
-from agents.content import content_agent
-from agents.analytics import analytics_agent
-from agents.trend_monitor import trend_monitor
+from backend.agents.orchestrator import orchestrator
+from backend.agents.research import research_agent
+from backend.agents.positioning import positioning_agent
+from backend.agents.icp import icp_agent
+from backend.agents.content import content_agent
+from backend.agents.analytics import analytics_agent
+from backend.agents.trend_monitor import trend_monitor
 
 # Import utilities
-from utils.supabase_client import get_supabase_client
-from utils.razorpay_client import get_razorpay_client
+from backend.utils.supabase_client import get_supabase_client
+from backend.utils.razorpay_client import get_razorpay_client
 
 # Import budget controller API routes
-from api.budget_routes import router as budget_router
+from backend.api.budget_routes import router as budget_router
 
 # Configure logging
 logging.basicConfig(
@@ -960,17 +960,25 @@ async def health_check():
         except Exception as e:
             db_status = f"unhealthy: {str(e)}"
         
-        # Check AI services
+        # Check AI services (Ollama)
         ai_status = "healthy"
         try:
-            # Simple AI service check
-            from utils.gemini_client import get_gemini_client
-            client = get_gemini_client()
-            # Just check if client initializes
+            import ollama
+            # Check if Ollama is running
+            ollama.list()
             ai_status = "healthy"
         except Exception as e:
             ai_status = f"unhealthy: {str(e)}"
-        
+
+        # Check Chroma DB
+        chroma_status = "healthy"
+        try:
+            from backend.utils.embeddings import get_chroma_client
+            client = get_chroma_client()
+            client.heartbeat()
+        except Exception as e:
+            chroma_status = f"unhealthy: {str(e)}"
+
         # Check Redis if available
         redis_status = "healthy"
         try:
@@ -988,6 +996,7 @@ async def health_check():
             "services": {
                 "database": db_status,
                 "ai_services": ai_status,
+                "chroma_db": chroma_status,
                 "redis": redis_status
             }
         }
