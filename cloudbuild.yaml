@@ -1,38 +1,155 @@
-# RaptorFlow Cloud Build
-timeout: 1200s
+# ==============================================
+# RaptorFlow Cloud Build - Monorepo Configuration
+# ==============================================
+# Builds and deploys backend and frontend in parallel
+# ==============================================
+
+timeout: 1800s
 
 substitutions:
   _REGION: us-central1
-  _SERVICE: raptorflow-api
+  _BACKEND_SERVICE: raptorflow-backend
+  _FRONTEND_SERVICE: raptorflow-frontend
 
+# Parallel build steps for backend and frontend
 steps:
-  - id: build
-    name: gcr.io/cloud-builders/docker
-    args: [build, -t, gcr.io/$PROJECT_ID/raptorflow:$SHORT_SHA, -t, gcr.io/$PROJECT_ID/raptorflow:latest, .]
+  # Build Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-backend'
+    dir: 'backend'
+    args: [
+      'build', 
+      '-t', 'gcr.io/$PROJECT_ID/${_BACKEND_SERVICE}:$SHORT_SHA',
+      '-t', 'gcr.io/$PROJECT_ID/${_BACKEND_SERVICE}:latest',
+      '.'
+    ]
+    waitFor: ['-']
 
-  - id: push
-    name: gcr.io/cloud-builders/docker
-    args: [push, --all-tags, gcr.io/$PROJECT_ID/raptorflow]
+  # Build Frontend  
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-frontend'
+    dir: 'frontend'
+    args: [
+      'build', 
+      '-t', 'gcr.io/$PROJECT_ID/${_FRONTEND_SERVICE}:$SHORT_SHA',
+      '-t', 'gcr.io/$PROJECT_ID/${_FRONTEND_SERVICE}:latest',
+      '.'
+    ]
+    waitFor: ['-']
 
-  - id: deploy
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: gcloud
+  # Push Backend Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-backend'
+    args: ['push', '--all-tags', 'gcr.io/$PROJECT_ID/${_BACKEND_SERVICE}']
+    waitFor: ['build-backend']
+
+  # Push Frontend Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-frontend'
+    args: ['push', '--all-tags', 'gcr.io/$PROJECT_ID/${_FRONTEND_SERVICE}']
+    waitFor: ['build-frontend']
+
+  # Deploy Backend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'deploy-backend'
+    entrypoint: 'gcloud'
     args:
-      - run
-      - deploy
-      - ${_SERVICE}
-      - --image=gcr.io/$PROJECT_ID/raptorflow:$SHORT_SHA
-      - --region=${_REGION}
-      - --platform=managed
-      - --allow-unauthenticated
-      - --cpu=2
-      - --memory=2Gi
-      - --max-instances=10
-      - --min-instances=0
-      - --timeout=300
-      - --set-env-vars=APP_MODE=prod,ENVIRONMENT=production,PORT=8080
-      - --set-secrets=OPENAI_API_KEY=openai-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,OPENROUTER_API_KEY=openrouter-api-key:latest,SUPABASE_URL=supabase-url:latest,SUPABASE_KEY=supabase-key:latest,JWT_SECRET_KEY=jwt-secret:latest,ENCRYPTION_KEY=encryption-key:latest,RAZORPAY_KEY_ID=razorpay-key-id:latest,RAZORPAY_KEY_SECRET=razorpay-key-secret:latest
+      - 'run'
+      - 'deploy'
+      - '${_BACKEND_SERVICE}'
+      - '--image=gcr.io/$PROJECT_ID/${_BACKEND_SERVICE}:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--cpu=1'
+      - '--memory=1Gi'
+      - '--max-instances=10'
+      - '--min-instances=0'
+      - '--timeout=300'
+      - '--port=8080'
+      - '--set-env-vars=APP_MODE=prod,ENVIRONMENT=production,PORT=8080'
+      - '--set-secrets=OPENAI_API_KEY=openai-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,OPENROUTER_API_KEY=openrouter-api-key:latest,SUPABASE_URL=supabase-url:latest,SUPABASE_KEY=supabase-key:latest,JWT_SECRET_KEY=jwt-secret:latest,ENCRYPTION_KEY=encryption-key:latest,RAZORPAY_KEY_ID=razorpay-key-id:latest,RAZORPAY_KEY_SECRET=razorpay-key-secret:latest'
+    waitFor: ['push-backend']
 
+  # Deploy Frontend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'deploy-frontend'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_FRONTEND_SERVICE}'
+      - '--image=gcr.io/$PROJECT_ID/${_FRONTEND_SERVICE}:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--cpu=1'
+      - '--memory=512Mi'
+      - '--max-instances=10'
+      - '--min-instances=0'
+      - '--timeout=300'
+      - '--port=3000'
+      - '--set-env-vars=NEXT_PUBLIC_API_URL=$$(gcloud run services describe ${_BACKEND_SERVICE} --region=${_REGION} --format="value(status.url)")'
+    waitFor: ['push-frontend', 'deploy-backend']
+
+  # Health Check and Verification
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'health-check'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "🧪 Running health checks..."
+        
+        # Get service URLs
+        BACKEND_URL=$(gcloud run services describe ${_BACKEND_SERVICE} --region=${_REGION} --format="value(status.url)")
+        FRONTEND_URL=$(gcloud run services describe ${_FRONTEND_SERVICE} --region=${_REGION} --format="value(status.url)")
+        
+        echo "🔧 Backend URL: $BACKEND_URL"
+        echo "🌐 Frontend URL: $FRONTEND_URL"
+        
+        # Test backend health
+        echo "Testing backend health..."
+        if curl -f "$BACKEND_URL/health" > /dev/null 2>&1; then
+          echo "✅ Backend health check passed"
+        else
+          echo "❌ Backend health check failed"
+          exit 1
+        fi
+        
+        # Test frontend health
+        echo "Testing frontend health..."
+        if curl -f "$FRONTEND_URL/api/health" > /dev/null 2>&1; then
+          echo "✅ Frontend health check passed"
+        else
+          echo "❌ Frontend health check failed"
+          exit 1
+        fi
+        
+        echo "🎉 All health checks passed!"
+        
+        # Output deployment summary
+        echo ""
+        echo "📋 Deployment Summary:"
+        echo "========================"
+        echo "🌐 Frontend: $FRONTEND_URL"
+        echo "🔧 Backend: $BACKEND_URL"
+        echo "🏥 Backend Health: $BACKEND_URL/health"
+        echo "🏥 Frontend Health: $FRONTEND_URL/api/health"
+        echo "📚 Backend API Docs: $BACKEND_URL/docs"
+        echo "========================"
+    waitFor: ['deploy-backend', 'deploy-frontend']
+
+# Images to track
 images:
-  - gcr.io/$PROJECT_ID/raptorflow:$SHORT_SHA
-  - gcr.io/$PROJECT_ID/raptorflow:latest
+  - 'gcr.io/$PROJECT_ID/${_BACKEND_SERVICE}:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/${_BACKEND_SERVICE}:latest'
+  - 'gcr.io/$PROJECT_ID/${_FRONTEND_SERVICE}:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/${_FRONTEND_SERVICE}:latest'
+
+# Tags for better organization
+tags:
+  - 'raptorflow'
+  - 'monorepo'
+  - 'backend'
+  - 'frontend'
