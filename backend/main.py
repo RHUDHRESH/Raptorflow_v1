@@ -966,13 +966,15 @@ async def health_check():
         except Exception as e:
             db_status = f"unhealthy: {str(e)}"
         
-        # Check AI services (Ollama)
+        # Check AI services (Ollama) - optional for cloud deployment
         ai_status = "healthy"
         try:
             import ollama
             # Check if Ollama is running
             ollama.list()
             ai_status = "healthy"
+        except ImportError:
+            ai_status = "not configured (Ollama not available in cloud)"
         except Exception as e:
             ai_status = f"unhealthy: {str(e)}"
 
