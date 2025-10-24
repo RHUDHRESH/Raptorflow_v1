@@ -22,6 +22,8 @@ razorpay==1.4.2
 
 # AI & ML Libraries - CLOUD ONLY
 langchain==0.0.354
+langchain-core==0.1.19
+langchain-community==0.0.18
 langchain-openai==0.0.2
 langchain-google-genai==0.0.6
 langgraph==0.0.20
@@ -80,4 +82,4 @@ structlog==23.2.0
 
 # Security Scanning
 bandit==1.7.5
-safety==2.3.5
+safety==3.2.0
