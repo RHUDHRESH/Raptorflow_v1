@@ -1,0 +1,16 @@
+# Linting & formatting
+ruff==0.6.9
+
+# Type checking
+mypy==1.13.0
+types-requests==2.32.0.20241016
+types-python-dateutil==2.9.0.20241009
+
+# Testing utilities (already present in runtime requirements, but ensure availability)
+pytest
+pytest-asyncio
+pytest-cov
+
+# Security scanning (bandit/safety already runtime deps; keep for CI if requirements.cloud trimmed later)
+bandit
+safety

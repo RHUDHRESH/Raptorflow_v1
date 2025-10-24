@@ -1,7 +1,8 @@
-"""
+/**
 CONTENT ROUTER UI COMPONENT
 React component for intelligent content routing and distribution
-"""
+
+*/
 
 import React, { useState, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
@@ -180,7 +181,7 @@ export const ContentRouter: React.FC = () => {
 
   return (
     <div className="content-router-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <h1>📱 Content Router - Intelligent Platform Distribution</h1>
+      <h1> Content Router - Intelligent Platform Distribution</h1>
 
       {/* Content Input Section */}
       <ContentInputSection
@@ -256,7 +257,7 @@ const ContentInputSection: React.FC<ContentInputSectionProps> = ({
 
   return (
     <div style={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
-      <h2>📝 Content Input</h2>
+      <h2> Content Input</h2>
 
       <div style={{ marginBottom: '15px' }}>
         <label htmlFor="contentType" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
@@ -313,7 +314,7 @@ const ContentInputSection: React.FC<ContentInputSectionProps> = ({
           fontSize: '16px'
         }}
       >
-        {isAnalyzing ? '🔄 Analyzing...' : '✨ Analyze & Recommend'}
+        {isAnalyzing ? ' Analyzing...' : ' Analyze & Recommend'}
       </button>
     </div>
   );
@@ -326,25 +327,25 @@ interface ContentAnalysisDisplayProps {
 
 const ContentAnalysisDisplay: React.FC<ContentAnalysisDisplayProps> = ({ analysis }) => {
   const sentimentEmoji = {
-    positive: '😊',
-    negative: '😠',
-    neutral: '😐'
+    positive: '',
+    negative: '',
+    neutral: ''
   };
 
   const toneEmoji = {
-    venting: '💢',
-    promotional: '📢',
-    question: '❓',
-    informative: 'ℹ️'
+    venting: '',
+    promotional: '',
+    question: '',
+    informative: ''
   };
 
   return (
     <div style={{ border: '1px solid #e8f5e9', borderRadius: '8px', padding: '15px', marginBottom: '20px', backgroundColor: '#f1f8e9' }}>
-      <h3>📊 Content Analysis</h3>
+      <h3> Content Analysis</h3>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-        <AnalysisCard label="Word Count" value={analysis.wordCount} emoji="📝" />
-        <AnalysisCard label="Character Count" value={analysis.characterCount} emoji="🔤" />
+        <AnalysisCard label="Word Count" value={analysis.wordCount} emoji="" />
+        <AnalysisCard label="Character Count" value={analysis.characterCount} emoji="" />
         <AnalysisCard
           label="Sentiment"
           value={`${sentimentEmoji[analysis.sentiment]} ${analysis.sentiment}`}
@@ -357,18 +358,18 @@ const ContentAnalysisDisplay: React.FC<ContentAnalysisDisplayProps> = ({ analysi
         />
         <AnalysisCard
           label="Has Question?"
-          value={analysis.hasQuestion ? '✅ Yes' : '❌ No'}
+          value={analysis.hasQuestion ? ' Yes' : ' No'}
           emoji=""
         />
         <AnalysisCard
           label="Has CTA?"
-          value={analysis.hasCta ? '✅ Yes' : '❌ No'}
+          value={analysis.hasCta ? ' Yes' : ' No'}
           emoji=""
         />
         <AnalysisCard
           label="Emotional Intensity"
           value={analysis.emotionalIntensity}
-          emoji="⚡"
+          emoji=""
         />
       </div>
     </div>
@@ -411,7 +412,7 @@ const PlatformRecommendationsSection: React.FC<PlatformRecommendationsSectionPro
 }) => {
   return (
     <div style={{ border: '1px solid #e3f2fd', borderRadius: '8px', padding: '20px', marginBottom: '20px', backgroundColor: '#f5f5f5' }}>
-      <h2>🎯 Platform Recommendations</h2>
+      <h2> Platform Recommendations</h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '15px' }}>
         {platforms.map(platform => (
@@ -489,7 +490,7 @@ const PlatformCard: React.FC<PlatformCardProps> = ({ platform, isSelected, onTog
 
       {platform.characterLimit && platform.characterLimit > 0 && (
         <div style={{ fontSize: '12px', color: '#999', marginTop: '10px' }}>
-          ↳ Max {platform.characterLimit} characters
+           Max {platform.characterLimit} characters
         </div>
       )}
     </div>
@@ -526,7 +527,7 @@ const DistributionControlsSection: React.FC<DistributionControlsSectionProps> = 
           fontWeight: 'bold'
         }}
       >
-        {isDistributing ? '🔄 Publishing...' : `✅ Publish to ${selectedCount} Platform${selectedCount !== 1 ? 's' : ''}`}
+        {isDistributing ? ' Publishing...' : ` Publish to ${selectedCount} Platform${selectedCount !== 1 ? 's' : ''}`}
       </button>
 
       <button
@@ -541,7 +542,7 @@ const DistributionControlsSection: React.FC<DistributionControlsSectionProps> = 
           fontSize: '16px'
         }}
       >
-        🗑️ Clear
+         Clear
       </button>
     </div>
   );
@@ -557,7 +558,7 @@ const DistributionResultsSection: React.FC<DistributionResultsSectionProps> = ({
 
   return (
     <div style={{ border: '1px solid #c8e6c9', borderRadius: '8px', padding: '20px', marginBottom: '20px', backgroundColor: '#f1f8e9' }}>
-      <h2>✅ Distribution Results</h2>
+      <h2> Distribution Results</h2>
 
       <div style={{ marginBottom: '15px', fontSize: '16px', fontWeight: 'bold', color: '#2e7d32' }}>
         Successfully published to {successCount}/{results.length} platforms
@@ -575,7 +576,7 @@ const DistributionResultsSection: React.FC<DistributionResultsSectionProps> = ({
             }}
           >
             <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-              {result.status === 'posted' ? '✅' : '❌'} {result.platform}
+              {result.status === 'posted' ? '' : ''} {result.platform}
             </div>
             {result.url && (
               <a
@@ -584,7 +585,7 @@ const DistributionResultsSection: React.FC<DistributionResultsSectionProps> = ({
                 rel="noopener noreferrer"
                 style={{ color: '#007bff', textDecoration: 'none', fontSize: '12px' }}
               >
-                View Post →
+                View Post 
               </a>
             )}
             {result.error && (
@@ -605,7 +606,7 @@ interface PlatformTipsSectionProps {
 const PlatformTipsSection: React.FC<PlatformTipsSectionProps> = ({ platforms }) => {
   return (
     <div style={{ border: '1px solid #fff3e0', borderRadius: '8px', padding: '20px', backgroundColor: '#fffde7' }}>
-      <h2>💡 Platform-Specific Tips</h2>
+      <h2> Platform-Specific Tips</h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '15px' }}>
         {platforms.map(platform => (
