@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import '../styles/globals.css'
+import { AuthProvider } from '@/context/AuthContext'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' })
@@ -26,10 +27,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="font-sans antialiased">
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-          {children}
-        </div>
-        <div id="modal-root" />
+        <AuthProvider>
+          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+            {children}
+          </div>
+          <div id="modal-root" />
+        </AuthProvider>
       </body>
     </html>
   )
