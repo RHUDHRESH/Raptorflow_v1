@@ -130,7 +130,7 @@ class GoogleSheetsExporterTool(BaseTool):
         return f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit?usp=sharing"
 
 
-class GoogleSheetsDataSync Tool(BaseTool):
+class GoogleSheetsDataSyncTool(BaseTool):
     """Sync data between RaptorFlow and Google Sheets"""
 
     def __init__(self):

@@ -49,8 +49,11 @@ from backend.agents.trend_monitor import trend_monitor
 from backend.utils.supabase_client import get_supabase_client
 from backend.utils.razorpay_client import get_razorpay_client
 
-# Import budget controller API routes
+# Import API routes
 from backend.api.budget_routes import router as budget_router
+from backend.api.oauth_routes import router as oauth_router
+from backend.api.conversation_routes import router as conversation_router
+from backend.api.embedding_routes import router as embedding_router
 
 # Configure logging
 logging.basicConfig(
@@ -70,8 +73,8 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(AuditLoggingMiddleware)
 app.add_middleware(InputValidationMiddleware)
 
-# Add authentication middleware in production
-if os.getenv('ENVIRONMENT') == 'production':
+# Add authentication middleware - CRITICAL: Always enable for security
+if os.getenv('ENVIRONMENT') in ['production', 'staging', 'development']:
     app.add_middleware(AuthenticationMiddleware)
 
 # CORS - Production-ready configuration
@@ -98,7 +101,10 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
 )
 
-# Include budget controller API routes
+# Include API routes
+app.include_router(oauth_router, prefix="/api/auth", tags=["authentication"])
+app.include_router(conversation_router, prefix="/api/conversations", tags=["conversations"])
+app.include_router(embedding_router, prefix="/api", tags=["search"])
 app.include_router(budget_router, prefix="/api/budget", tags=["budget"])
 
 supabase = get_supabase_client()
