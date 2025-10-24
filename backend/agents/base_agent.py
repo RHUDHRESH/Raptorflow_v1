@@ -5,7 +5,7 @@ from typing import TypedDict, Any, Dict, List, Optional
 from abc import ABC, abstractmethod
 from datetime import datetime
 from langgraph.graph import StateGraph, END
-from ..utils.cloud_provider import get_cloud_provider, AllProvidersFailedError
+from backend.utils.cloud_provider import get_cloud_provider, AllProvidersFailedError
 
 logger = logging.getLogger(__name__)
 

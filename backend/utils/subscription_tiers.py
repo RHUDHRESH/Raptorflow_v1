@@ -1,5 +1,5 @@
 
-"SUBSCRIPTION_TIERS = {
+SUBSCRIPTION_TIERS = {
     'basic': {
         'name': 'Basic',
         'max_icps': 3,
@@ -41,4 +41,3 @@
         },
     },
 }
-"

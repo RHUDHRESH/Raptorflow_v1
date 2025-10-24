@@ -1,5 +1,5 @@
 from langchain.tools import BaseTool
-from typing import List, Dict
+from typing import List, Dict, Optional
 from utils.gemini_client import get_gemini_client
 from tools.perplexity_search import PerplexitySearchTool
 from tools.evidence_db import EvidenceDBTool

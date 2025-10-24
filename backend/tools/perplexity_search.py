@@ -22,8 +22,6 @@ class PerplexitySearchTool(BaseTool):
     
     def __init__(self):
         super().__init__()
-        self.api_key = os.getenv('PERPLEXITY_API_KEY')
-        self.base_url = "https://api.perplexity.ai/chat/completions"
     
     def _run(
         self,
@@ -46,10 +44,11 @@ class PerplexitySearchTool(BaseTool):
         system_prompt = system_prompts.get(mode, system_prompts['research'])
         
         # Make API call
+        base_url = "https://api.perplexity.ai/chat/completions"
         try:
             with httpx.Client(timeout=60.0) as client:
                 response = client.post(
-                    self.base_url,
+                    base_url,
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
                         "Content-Type": "application/json"
@@ -123,10 +122,11 @@ class PerplexitySearchTool(BaseTool):
         
         system_prompt = system_prompts.get(mode, system_prompts['research'])
         
+        base_url = "https://api.perplexity.ai/chat/completions"
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
-                    self.base_url,
+                    base_url,
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
                         "Content-Type": "application/json"

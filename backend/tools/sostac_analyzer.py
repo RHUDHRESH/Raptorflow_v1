@@ -1,4 +1,5 @@
 from langchain.tools import BaseTool
+from typing import Dict, Any
 from utils.gemini_client import get_gemini_client
 from utils.supabase_client import get_supabase_client
 import json
