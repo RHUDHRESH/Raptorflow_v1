@@ -41,8 +41,8 @@ COPY --from=builder /opt/venv /opt/venv
 WORKDIR /app
 RUN adduser --disabled-password --gecos '' appuser
 
-# Copy application code
-COPY . .
+# Copy application code (preserve package structure)
+COPY . /app/backend
 
 # Set permissions
 RUN chown -R appuser:appuser /app
@@ -58,4 +58,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
 EXPOSE 8080
 
 # Start command
-CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers 1"]
+CMD ["sh", "-c", "exec uvicorn backend.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]

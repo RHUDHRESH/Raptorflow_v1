@@ -33,7 +33,7 @@ COPY --from=builder /opt/venv /opt/venv
 
 WORKDIR /app
 RUN adduser --disabled-password --gecos '' appuser
-COPY backend/ .
+COPY backend /app/backend
 RUN chown -R appuser:appuser /app
 
 USER appuser
@@ -42,4 +42,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 EXPOSE 8080
-CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers 1"]
+CMD ["sh", "-c", "exec uvicorn backend.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]
