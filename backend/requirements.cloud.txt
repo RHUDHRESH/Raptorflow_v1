@@ -8,7 +8,7 @@
 # Core Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-pydantic==1.10.12
+pydantic==2.9.2
 python-dotenv==1.0.0
 websockets>=12.0
 
@@ -21,30 +21,32 @@ SQLAlchemy==2.0.23
 razorpay==1.4.2
 
 # AI & ML Libraries - CLOUD ONLY
-langchain==0.0.354
-langchain-core==0.1.19
-langchain-community==0.0.18
-langchain-openai==0.0.2
-langchain-google-genai==0.0.6
-langgraph==0.0.20
-langsmith==0.0.83
-google-generativeai==0.3.2
-openai>=1.6.1
-tiktoken==0.5.2
+langchain==0.3.27
+langchain-core==0.3.79
+langchain-community==0.3.27
+langchain-text-splitters==0.3.11
+langchain-openai==0.3.25
+langchain-google-genai==2.0.1
+langgraph==0.6.11
+langsmith==0.3.45
+google-generativeai==0.8.5
+google-ai-generativelanguage==0.6.15
+openai==1.109.1
+tiktoken==0.7.0
 
 # Langchain Dependencies
 aiohttp==3.9.1
 tenacity==8.2.3
 jsonpatch==1.33
 PyYAML==6.0.1
-requests==2.31.0
+requests==2.32.3
 
 # Data Processing (minimal - for analytics only)
 numpy==1.26.4
 pandas==2.1.4
 
 # HTTP & Networking
-httpx>=0.27.0
+httpx==0.28.1
 aiofiles==23.2.1
 python-multipart==0.0.6
 
@@ -57,9 +59,9 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
 # OAuth & Authentication
-google-auth>=2.25.2
-google-auth-oauthlib>=1.1.0
-google-auth-httplib2>=0.2.0
+google-auth==2.41.1
+google-auth-oauthlib==1.2.2
+google-auth-httplib2==0.2.0
 pyjwt>=2.8.0
 
 # Vector Database & RAG
@@ -83,3 +85,4 @@ structlog==23.2.0
 # Security Scanning
 bandit==1.7.5
 safety==3.2.0
+pbr==6.0.0
