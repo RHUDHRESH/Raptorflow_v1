@@ -1,0 +1,200 @@
+╔════════════════════════════════════════════════════════════════════════════════════════╗
+║                    RAPTORFLOW TIER COMPARISON - VISUAL GUIDE                           ║
+╚════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+                              BREEZE        GLIDE         SOAR
+                           ┌───────────┬───────────┬───────────┐
+PRICING                    │ ₹1,499/mo │ ₹2,499/mo │ ₹4,999/mo │
+                           └───────────┴───────────┴───────────┘
+
+TARGET USER                Solo Founder  Small Teams   Agencies
+                           1-2 people    3-5 people    6+ people
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CAPACITY LIMITS
+
+  Projects                 5             ∞             ∞
+  Research Runs/mo         30            120           180
+  Assets/mo                40            120           200
+  Personas                 3             3             5
+  Evidence Chunks          10k           50k           100k
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CORE FEATURES (All Tiers Get)
+
+  ✓ Strategy Workspace
+  ✓ ICP & Persona Studio
+  ✓ Positioning / Point of View
+  ✓ Offer & Pricing Builder
+  ✓ PMF Pulse & Cadence Planner
+  ✓ Category Mapper
+  ✓ Wedge Finder & Objection Map
+  ✓ Message Matrix & Copy Studio
+  ✓ Evidence Locker (capacity varies)
+  ✓ Dispatch & Tracking
+  ✓ Lift Measurement
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COLLABORATION & TEAM
+
+  Named Seats              1 (owner)     ∞ (invites)   5 (named)
+  Guest Approvers          2             2             Role-based
+  Active Editor Slots      Solo          3 pooled      5 pooled
+  Concurrent Editing       No limits     Max 3 users   Max 5 users
+  Shared Quota             N/A           Yes           Yes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CREATION & COPY
+
+  Message Matrix           ✓             ✓ (Advanced)  ✓ (Advanced)
+  Creative Briefs          ✓             ✓ (Multi-pg)  ✓ (Multi-pg)
+  Copy Studio              ✓             ✓             ✓
+  Long-form Drafts         ✗             ✓             ✓
+  Batch Recipes            ✗             ✗             ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DISPATCH & CHANNELS
+
+  Dispatch Channels        1             2             3
+  UTM Builder              ✓             ✓             ✓
+  QR Code Generation       ✗             ✓             ✓
+  Link Rotators            ✗             ✗             ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STRATEGY DEPTH
+
+  Base Strategy            ✓             ✓             ✓
+  Adjacency Mapping Pro    ✗             ✓             ✓
+  Offer Stress-Test        ✗             ✓             ✓
+  POV Heatmap              ✗             ✓             ✓
+  Competitor Watch         ✗             ✗             ✓
+  Market Pulse             ✗             ✗             ✓
+  Offer Ladder Simulator   ✗             ✗             ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MEASUREMENT & ANALYTICS
+
+  Lift Lite                ✓             ✓             ✓
+  Creative Leaderboard     ✗             ✓             ✓
+  Kill/Scale Recs          ✗             ✓             ✓
+  Experiment Snapshots     ✗             ✗             ✓
+  Exportable Reports       ✗             ✗             ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GOVERNANCE & COMPLIANCE
+
+  Tone & Claim Guard       ✓             ✓             ✓
+  Plagiarism Scan          ✓             ✓             ✓
+  Brand Guard              ✗             ✓             ✓
+  Restricted Terms         ✗             ✓             ✓
+  Approval History Export  ✗             ✗             ✓
+  Role-Based Permissions   ✗             ✗             ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SUPPORT
+
+  Standard Support         ✓             ✓             ✓
+  Priority Support         ✗             ✗             ✓
+  Priority Queue           ✗             ✗             ✓
+  Escalation Path          ✗             ✗             ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+UPGRADE PATHS
+═════════════════════════════════════════════════════════════════════════════════════════
+
+        BREEZE (₹1,499)
+        "Give me clarity, fast"
+                ↓
+         [UPGRADE WHEN]
+         ✓ Hired team member
+         ✓ Need >40 assets/month
+         ✓ Need QR codes
+         ✓ Need strategy depth tools
+                ↓
+        GLIDE (₹2,499)
+        "My team is in this now"
+                ↓
+         [UPGRADE WHEN]
+         ✓ Multiple clients
+         ✓ Need 5+ personas
+         ✓ Need automation
+         ✓ Need audit trails
+         ✓ Need A/B testing
+                ↓
+        SOAR (₹4,999)
+        "I am running this like an operation"
+
+
+PRICING PROGRESSION
+═════════════════════════════════════════════════════════════════════════════════════════
+
+  Breeze to Glide          +67% cost increase
+                           (₹1,000 more for team + strategy depth)
+
+  Glide to Soar            +100% cost increase
+                           (₹2,500 more for automation + audit + 5 personas)
+
+  Breeze to Soar           +234% cost increase
+                           (₹3,500 more for full operation stack)
+
+
+IDEAL CUSTOMER PROFILE
+═════════════════════════════════════════════════════════════════════════════════════════
+
+BREEZE ICP
+  • Founder-led SaaS/product company
+  • Pre-PMF or early PMF stage
+  • Single product / brand
+  • Founder does marketing themselves
+  • <2 people on marketing team
+  • Budget: ₹1,499/month is easy decision
+  • Pain: "We're creating a lot but nothing's working. What's the strategy?"
+
+GLIDE ICP
+  • Growing SaaS / B2B / Agency clients
+  • PMF achieved, scaling growth
+  • Multiple campaigns or brands
+  • 2-4 person marketing team or agency
+  • Starting to do more testing
+  • Budget: ₹2,499/month is reasonable team investment
+  • Pain: "We need to move faster and prove our positioning to clients/investors"
+
+SOAR ICP
+  • Established SaaS / B2B / Agencies
+  • High CAC / retention focus
+  • Multi-client agencies
+  • 5+ person team or multiple departments
+  • Running simultaneous campaigns
+  • Budget: ₹4,999/month is operational expense
+  • Pain: "We need repeatability, audit trails, and proven strategy for every client"
+
+
+VALUE PROPOSITION BY TIER
+═════════════════════════════════════════════════════════════════════════════════════════
+
+BREEZE
+  "Position yourself faster. Stop guessing what to say."
+  → Strategy + positioning + messaging in one week, not one quarter
+
+GLIDE
+  "Move as a team. Prove positioning to your boss/client/investor."
+  → Strategy heatmaps, leaderboards, and kill/scale recommendations
+
+SOAR
+  "Scale without headcount. Audit everything. Run like an operation."
+  → Batch recipes, approval trails, competitor watch, A/B testing
+
+
+═════════════════════════════════════════════════════════════════════════════════════════

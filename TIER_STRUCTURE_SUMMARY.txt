@@ -1,0 +1,355 @@
+================================================================================
+RAPTORFLOW TIER STRUCTURE - COMPLETE LOCK-IN
+================================================================================
+
+STATUS: ✅ LOCKED & DOCUMENTED (2025-10-25)
+
+WHAT JUST HAPPENED:
+-------------------
+You've moved from vague "Basic/Pro/Enterprise" tiers to a crystal-clear
+Breeze/Glide/Soar structure with canonical specs, pricing, capacity limits,
+features, and backend enforcement.
+
+THE THREE TIERS:
+================
+
+BREEZE (₹1,499/mo + GST)
+  Target: Solo founder, very lean team, single brand
+  Tagline: "Give me clarity, fast."
+
+  Capacity:
+    • 5 projects
+    • 30 research runs/month
+    • 40 assets/month (70% Light / 30% Pro default)
+    • 3 personas
+    • 10k evidence chunks
+
+  Collaboration:
+    • 1 named seat (owner)
+    • 2 guest approvers (view/comment, no generation)
+    • 1 active editor (solo, no concurrency)
+
+  Key Features:
+    • Full Strategy Workspace (ICP, positioning, offer builder, etc.)
+    • Message Matrix & Copy Studio
+    • Evidence Locker
+    • Lift Lite measurement
+    • 1 dispatch channel
+    • Tone & claim guard
+    • Plagiarism scan
+
+  NOT Included:
+    ✗ QR codes
+    ✗ Advanced strategy analysis (Stress-Test, Heatmap, Adjacency)
+    ✗ Brand Guard
+    ✗ Batch Recipes
+    ✗ Rotators
+    ✗ Competitor Watch / Market Pulse
+    ✗ Approval audit trail
+
+
+GLIDE (₹2,499/mo + GST)
+  Target: Small teams, boutique agencies, growing brands
+  Tagline: "My team is in this with me now."
+
+  Capacity:
+    • Unlimited projects
+    • 120 research runs/month
+    • 120 assets/month (Light/Pro fully adjustable)
+    • 3 personas (with deeper analysis)
+    • 50k evidence chunks
+
+  Collaboration:
+    • Unlimited invites (anyone can join workspace)
+    • 3 pooled active editor slots (max 3 editing simultaneously)
+    • 2 formal approvers (with role-based review)
+    • Shared quota (everyone burns from same monthly pool)
+
+  Key Features (all of Breeze +):
+    ✓ Advanced Message Matrix (3 personas × full TOFU/MOFU/BOFU funnel)
+    ✓ Long-form drafts & multi-page creative briefs
+    ✓ Adjacency Mapping Pro
+    ✓ Offer Stress-Test
+    ✓ POV Heatmap
+    ✓ Creative Leaderboard
+    ✓ Kill/Scale recommendations
+    ✓ Brand Guard (enforce style rules, restricted terms)
+    ✓ 2 dispatch channels
+    ✓ QR batch generation
+    ✓ Full Lift Report
+
+  NOT Included:
+    ✗ Batch Recipes
+    ✗ Rotators
+    ✗ Competitor Watch / Market Pulse
+    ✗ Offer Ladder Simulator
+    ✗ Approval audit trail
+    ✗ Priority support
+
+
+SOAR (₹4,999/mo + GST)
+  Target: Agencies with multiple clients, performance teams
+  Tagline: "I am running this like an operation."
+
+  Capacity:
+    • Unlimited projects
+    • 180 research runs/month (priority queue)
+    • 200 assets/month (Light/Pro fully adjustable)
+    • 5 personas
+    • 100k evidence chunks
+
+  Collaboration:
+    • 5 named seats (locked roles: Owner, Editor, Approver, Viewer)
+    • 5 pooled active editor slots (max 5 editing simultaneously)
+    • Role-based permissions (not guest approvers)
+    • Shared quota
+    • Priority support & escalation
+
+  Key Features (all of Breeze + Glide +):
+    ✓ Batch Recipes (chain 2-3 steps: research → update matrix → generate assets)
+    ✓ Competitor Watch (weekly diffs on competitor positioning/offers)
+    ✓ Market Pulse ("what buyers are saying this week" signal tiles)
+    ✓ Offer Ladder Simulator (test higher-ticket/bundle/guarantee ladders)
+    ✓ 3 dispatch channels
+    ✓ Rotators (rotate links/angles to prevent creative fatigue)
+    ✓ Experiment Snapshots (exportable: variant, performance, recommendation)
+    ✓ Approval History export (CSV/PDF for compliance)
+    ✓ Role-based permissions with audit trail
+
+
+WHAT ALL TIERS GET (NON-NEGOTIABLE):
+====================================
+
+✓ Strategy Workspace (never crippled)
+  • ICP & Persona Studio
+  • Positioning / Point of View (what we stand for, promise, prove)
+  • Offer & Pricing Builder
+  • PMF Pulse & Cadence Planner (weekly talking points)
+  • Category Mapper
+  • Anti-Persona Guard
+  • Wedge Finder
+  • Objection Map
+
+✓ Evidence Locker (storage varies: 10k → 50k → 100k chunks)
+  • Ingest URLs, PDFs, reviews, competitor pages
+  • Break into searchable chunks, embed for semantics
+  • Cite back to prevent hallucinations
+
+✓ Message Matrix & Copy Studio
+  • Personas × Funnel stages → messaging angles
+  • Light assets (~350 words, one-pass, Evidence Locker only)
+  • Pro assets (~900 words, two-pass, up to 5 fresh URLs)
+  • Auto-upgrade Light → Pro if needed (protects quality + cost)
+
+✓ Dispatch & Tracking
+  • Schedule content
+  • Auto-generate UTMs
+  • Log dispatches
+
+✓ Lift Measurement
+  • Compare before vs. after KPIs
+  • "This beat that" stories
+  • Kill underperformers, scale winners
+
+
+THE PHILOSOPHY:
+===============
+
+We never cripple the thinking brain (strategy, positioning, offer design).
+All tiers get full access to the core value of RaptorFlow.
+
+Tiers differ in:
+  1. SCALE (quotas: projects, assets, personas, research runs)
+  2. COLLABORATION (editor slots, team size, permission models)
+  3. DEPTH (analysis breadth: Stress-Test, Heatmap, Watch, Pulse, Ladder Sim)
+  4. CHANNELS (dispatch destinations: 1 → 2 → 3)
+  5. AUTOMATION (Batch Recipes on Soar only)
+
+This drives upgrades naturally:
+  • Breeze → Glide: Hired someone? Need more assets? Want QR codes?
+  • Glide → Soar: Multiple clients? Need automation? Need audit trails?
+
+
+WHY THESE PRICES?
+=================
+
+₹1,499 (Breeze):  Entry point. Solo founder can get started without hesitation.
+₹2,499 (Glide):   +₹1,000 for team collaboration + advanced strategy. 67% more.
+₹4,999 (Soar):    +₹2,500 for automation + audit + 5 personas. 2x Glide.
+
+Pricing reflects:
+  • Editor slot concurrency (key cost differentiator in SaaS)
+  • Capacity increases (storage, quotas, processing)
+  • Support tier (priority for Soar)
+  • Audit/compliance features (Soar only)
+
+
+WHY NO FREE TIER?
+=================
+
+RaptorFlow is not a toy. Entry is Breeze at ₹1,499.
+
+Benefits:
+  ✓ No freemium complexity (support burden, unclear upgrade path)
+  ✓ Clear monetization from day 1
+  ✓ Signals product is serious/valuable
+  ✓ Attracts right customer (professional, funded)
+  ✓ Easier support (paid users have skin in the game)
+
+
+WHY POOLED EDITOR SLOTS INSTEAD OF PER-SEAT PRICING?
+====================================================
+
+Per-seat pricing (₹X/user/month) becomes:
+  ✗ Confusing: Do I pay ₹500/user on Glide? ₹1000? ₹100?
+  ✗ Revenue leak: Teams hide users, use shared accounts
+  ✗ Support nightmare: "Why am I charged for 5 people if only 3 are active?"
+
+Pooled slots (3 concurrent editors on Glide, 5 on Soar):
+  ✓ Clear: Max 3 people editing at once
+  ✓ Fair: You pay for team capacity, not headcount
+  ✓ Simple: No seat management UI
+  ✓ Revenue stable: Customer pays for tier, not for adding people
+
+
+HOW TIER MIGRATION WORKS:
+=========================
+
+Existing customers on old tiers (Basic/Pro/Enterprise):
+  → Will be migrated to Breeze/Glide/Soar on next renewal
+  → Or offered 1-month trial of new tier names
+  → No forced immediate upgrade; customer choice
+
+Pricing update:
+  → Old Basic customers: might see price change to ₹1,499 (from ?)
+  → Old Pro customers: might see price change to ₹2,499 (from ?)
+  → Old Enterprise customers: might see price change to ₹4,999 (from ?)
+
+
+DOCUMENTS CREATED:
+==================
+
+1. TIER_DEFINITIONS.md (300+ lines)
+   ├─ Complete specs for all three tiers
+   ├─ Every feature, capacity, limit, and differentiation
+   ├─ Non-negotiables spelled out
+   └─ Source of truth for all teams
+
+2. TIER_QUICK_REFERENCE.md (Printable card)
+   ├─ One-page view of all tiers
+   ├─ Tables for easy comparison
+   ├─ Upgrade triggers
+   └─ Print and distribute to sales/support
+
+3. TIER_LOCK_SUMMARY.md
+   ├─ What got locked in
+   ├─ Team next steps (Backend, Frontend, Sales, Product)
+   ├─ Enforcement rules
+   └─ FAQ + clarifications
+
+4. TIER_BACKEND_INTEGRATION.md
+   ├─ Backend implementation roadmap
+   ├─ Phase 1-5: Quota validation, feature gating, DB migrations, webhooks
+   ├─ Code examples (Python)
+   └─ Testing strategy + monitoring
+
+5. backend/utils/subscription_tiers.py (Updated)
+   ├─ Python config object for all tiers
+   ├─ Helper functions: get_tier_config(), validate_tier_access(), get_capacity_limit()
+   ├─ Lookup dicts: TIER_NAMES, TIER_PRICES
+   └─ Comments: "CANONICAL SOURCE: /TIER_DEFINITIONS.md"
+
+
+TEAM NEXT STEPS:
+================
+
+Backend Team:
+  [ ] Read TIER_BACKEND_INTEGRATION.md
+  [ ] Phase 1: Build quota validation middleware
+  [ ] Phase 1: Build feature gating middleware
+  [ ] Phase 2: Update subscription endpoint to return tier config
+  [ ] Phase 3: Run database migration (basic→breeze, pro→glide, enterprise→soar)
+  [ ] Phase 4: Update Razorpay webhook for new tier names
+  [ ] Add tests for tier enforcement
+
+Frontend Team:
+  [ ] Read TIER_QUICK_REFERENCE.md
+  [ ] Update pricing page: ₹1,499 / ₹2,499 / ₹4,999
+  [ ] Update tier display in dashboard
+  [ ] Update feature availability checks
+  [ ] Add "Upgrade" buttons with upgrade path messaging
+  [ ] Update onboarding to explain tiers
+
+Sales/Support Team:
+  [ ] Print TIER_QUICK_REFERENCE.md
+  [ ] Read TIER_DEFINITIONS.md
+  [ ] Learn upgrade triggers (Breeze→Glide, Glide→Soar)
+  [ ] Update sales deck with new tier names
+  [ ] Update support docs with tier-specific feature lists
+
+Product/Finance Team:
+  [ ] Decide: Grandfather existing customers at old price? Or migrate?
+  [ ] Plan customer communication (email, in-app, support)
+  [ ] Update Razorpay plan mapping
+  [ ] Track upgrade rates (KPI: how many Breeze → Glide per month?)
+
+
+CRITICAL RULES (DO NOT BREAK):
+==============================
+
+1. NEVER modify tier specs in code without updating TIER_DEFINITIONS.md first
+2. ALL tier configs go through backend/utils/subscription_tiers.py
+3. NO hardcoded tier logic scattered across the codebase
+4. NO new tiers without reviewing with product/finance/leadership
+5. If specs change, update TIER_DEFINITIONS.md → backend code → communicate teams
+
+
+HOW TO UPDATE TIERS (IF NEEDED):
+================================
+
+1. Update /TIER_DEFINITIONS.md with new specs
+2. Update /backend/utils/subscription_tiers.py with new config
+3. Update /TIER_QUICK_REFERENCE.md with new summary
+4. Notify all teams (Backend, Frontend, Sales, Product, Finance)
+5. Create git commit with detailed message
+6. DO NOT deploy until all teams have reviewed
+
+
+QUESTIONS? READ THIS:
+=====================
+
+Q: Why Breeze/Glide/Soar names?
+A: Better than "Basic/Pro/Enterprise." More distinctive, less clinical.
+
+Q: What if someone wants a 4th editor slot on Glide?
+A: Upgrade to Soar (5 slots for ₹4,999). That's the designed upgrade path.
+
+Q: Can we offer overage billing (pay for extra assets)?
+A: Not in v1. Keep it simple: Breeze/Glide/Soar or upgrade. Add metering in v2 if needed.
+
+Q: How do we handle existing customers on old tiers?
+A: Product/Finance decision. Recommend: 1-month trial period, then let them choose.
+
+Q: What if a customer is on Breeze but needs features from Soar?
+A: They upgrade. Or we build a Soar feature and offer them a trial. No in-between tiers.
+
+Q: Can we remove a feature from a higher tier to make room for a lower tier?
+A: NO. Features only go down, never back up. What Breeze gets, Glide/Soar keep + add more.
+
+
+APPROVAL & LOCK-IN:
+===================
+
+✅ Tier names: Breeze, Glide, Soar (LOCKED)
+✅ Pricing: ₹1,499 / ₹2,499 / ₹4,999 (LOCKED)
+✅ Capacity limits: As specified (LOCKED)
+✅ Feature list: As specified (LOCKED)
+✅ Philosophy: Core strategy brain never crippled (LOCKED)
+
+This is YOUR binding spec until you explicitly change it.
+All product, engineering, and GTM decisions reference this.
+
+Last Updated: 2025-10-25
+Next Review: Quarterly (or when pricing strategy changes)
+
+================================================================================
