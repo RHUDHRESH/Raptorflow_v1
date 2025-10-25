@@ -55,6 +55,7 @@ from .api.oauth_routes import router as oauth_router
 from .api.conversation_routes import router as conversation_router
 from .api.embedding_routes import router as embedding_router
 from .api.ocr_routes import router as ocr_router
+from .api.research_routes import router as research_router, initialize_research_graph
 
 # Configure logging
 logging.basicConfig(
@@ -108,9 +109,23 @@ app.include_router(conversation_router, prefix="/api/conversations", tags=["conv
 app.include_router(embedding_router, prefix="/api", tags=["search"])
 app.include_router(budget_router, prefix="/api/budget", tags=["budget"])
 app.include_router(ocr_router, tags=["ocr"])
+app.include_router(research_router, tags=["research"])
 
 supabase = get_supabase_client()
 razorpay = get_razorpay_client()
+
+# Initialize Deep Research Graph on startup
+try:
+    initialize_research_graph(
+        perplexity_api_key=os.getenv("PERPLEXITY_API_KEY", ""),
+        exa_api_key=os.getenv("EXA_API_KEY", ""),
+        google_api_key=os.getenv("GOOGLE_API_KEY", ""),
+        google_search_engine_id=os.getenv("GOOGLE_SEARCH_ENGINE_ID", "")
+    )
+    logger.info("Deep Research Graph initialized successfully")
+except Exception as e:
+    logger.warning(f"Deep Research Graph initialization failed: {e}")
+    logger.warning("Research features may not be available")
 
 # ==================== ASYNC DATABASE HELPERS ====================
 
