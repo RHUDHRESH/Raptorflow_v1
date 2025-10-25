@@ -12,7 +12,7 @@ import ContextTextInput from './ContextTextInput';
 import ContextFileUpload from './ContextFileUpload';
 import ContextURLInput from './ContextURLInput';
 import ContextItemsList from './ContextItemsList';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 
 interface ContextIntakePanelProps {
   workspace: any;

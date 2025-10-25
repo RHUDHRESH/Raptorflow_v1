@@ -6,8 +6,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 interface ContextURLInputProps {
   onSubmit: (url: string) => Promise<void>;

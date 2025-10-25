@@ -6,8 +6,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import Textarea from '@/components/ui/Textarea';
-import Button from '@/components/ui/Button';
+import { Textarea } from '@/components/ui/Textarea';
+import { Button } from '@/components/ui/Button';
 
 interface ContextTextInputProps {
   onSubmit: (text: string) => Promise<void>;

@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 
 interface ContextFileUploadProps {
   workspaceId: string;
