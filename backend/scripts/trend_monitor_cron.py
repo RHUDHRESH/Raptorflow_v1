@@ -23,4 +23,3 @@ print("Trend monitoring cron started. Waiting for scheduled time...")
 while True:
     schedule.run_pending()
     time.sleep(60)  # Check every minute
-Google Cloud Run Deployment

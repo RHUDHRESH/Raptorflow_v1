@@ -300,7 +300,7 @@ class IntegrationMarketplaceAdapter(BaseTool):
         }
 
 
-class OneWaySync Tool(BaseTool):
+class OneWaySyncTool(BaseTool):
     """One-way sync for data from external sources"""
 
     def __init__(self):
