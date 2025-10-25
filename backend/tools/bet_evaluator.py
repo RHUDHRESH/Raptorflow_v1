@@ -1,5 +1,6 @@
 from langchain.tools import BaseTool
 from utils.gemini_client import get_gemini_client
+from typing import Dict, List, Optional
 import json
 
 class BetEvaluatorTool(BaseTool):
@@ -65,3 +66,34 @@ For each bet, provide:
 
 4. RESOURCE ALLOCATION
    - Budget: Percentage or dollar amount
+   - Time: Team hours/effort
+   - Dependencies: What else needs to happen
+
+Provide all {count} bets in a structured format.
+"""
+            response = self.gemini.generate_content(prompt)
+            return response.text
+            
+        elif action == 'evaluate':
+            if not bet or not current_data:
+                raise ValueError("evaluate requires: bet, current_data")
+            
+            prompt = f"""Evaluate this strategic bet against current performance.
+
+BET:
+{json.dumps(bet, indent=2)}
+
+CURRENT DATA:
+{json.dumps(current_data, indent=2)}
+
+Evaluation:
+1. Progress toward success threshold
+2. Kill-switch assessment (should we continue?)
+3. Learnings so far
+4. Recommendations (continue, pivot, or kill)
+"""
+            response = self.gemini.generate_content(prompt)
+            return response.text
+            
+        else:
+            raise ValueError(f"Unknown action: {action}. Use 'create' or 'evaluate'")

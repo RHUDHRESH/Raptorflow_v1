@@ -1,5 +1,6 @@
 from langchain.tools import BaseTool
 from utils.gemini_client import get_gemini_client
+from typing import Dict
 import json
 
 class AMECEvaluatorTool(BaseTool):
@@ -38,3 +39,29 @@ AMEC Framework Analysis:
 ## INPUT (What we invested)
 Analyze:
 - Budget spent
+- Resources allocated
+- Time invested
+
+## OUTPUT (What we produced)
+Analyze:
+- Content created
+- Campaigns launched
+- Activities executed
+
+## OUTCOME (What happened)
+Analyze:
+- Engagement metrics
+- Leads generated
+- Brand awareness
+
+## IMPACT (What changed)
+Analyze:
+- Revenue impact
+- Brand value change
+- Customer behavior shifts
+
+Provide a comprehensive evaluation with specific metrics and recommendations.
+"""
+        
+        response = self.gemini.generate_content(prompt)
+        return response.text
