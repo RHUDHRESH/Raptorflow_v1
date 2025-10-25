@@ -1,11 +1,11 @@
 from typing import TypedDict, List, Dict
 from langgraph.graph import StateGraph, END
-from tools.persona_generator import PersonaGeneratorTool
-from tools.jtbd_mapper import JTBDMapperTool
-from tools.tag_extractor import TagExtractorTool
-from tools.segment_scorer import SegmentScorerTool
-from utils.embeddings import generate_embedding
-from utils.supabase_client import get_supabase_client
+from ..tools.persona_generator import PersonaGeneratorTool
+from ..tools.jtbd_mapper import JTBDMapperTool
+from ..tools.tag_extractor import TagExtractorTool
+from ..tools.segment_scorer import SegmentScorerTool
+from ..utils.embeddings import generate_embedding
+from ..utils.supabase_client import get_supabase_client
 from .base_agent import BaseAgent, AgentState
 import json
 

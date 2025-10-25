@@ -1,7 +1,7 @@
-from tools.perplexity_search import PerplexitySearchTool
-from tools.relevance_scorer import RelevanceScorerTool
-from tools.calendar_injector import CalendarInjectorTool
-from utils.supabase_client import get_supabase_client
+from ..tools.perplexity_search import PerplexitySearchTool
+from ..tools.relevance_scorer import RelevanceScorerTool
+from ..tools.calendar_injector import CalendarInjectorTool
+from ..utils.supabase_client import get_supabase_client
 import asyncio
 from datetime import datetime
 import json
