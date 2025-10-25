@@ -10,6 +10,7 @@ types-python-dateutil==2.9.0.20241009
 pytest
 pytest-asyncio
 pytest-cov
+pytest-mock
 
 # Security scanning (bandit/safety already runtime deps; keep for CI if requirements.cloud trimmed later)
 bandit

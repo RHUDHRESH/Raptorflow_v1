@@ -23,7 +23,7 @@ else:
 # --- end dotenv bootstrap (phase1.fix.0.6) ---
 
 # Import security middleware
-from backend.middleware.security_middleware import (
+from .middleware.security_middleware import (
     SecurityHeadersMiddleware,
     InputValidationMiddleware,
     AuthenticationMiddleware,
@@ -37,23 +37,23 @@ from backend.middleware.security_middleware import (
 )
 
 # Import agents
-from backend.agents.orchestrator import orchestrator
-from backend.agents.research import research_agent
-from backend.agents.positioning import positioning_agent
-from backend.agents.icp import icp_agent
-from backend.agents.content import content_agent
-from backend.agents.analytics import analytics_agent
-from backend.agents.trend_monitor import trend_monitor
+from .agents.orchestrator import orchestrator
+from .agents.research import research_agent
+from .agents.positioning import positioning_agent
+from .agents.icp import icp_agent
+from .agents.content import content_agent
+from .agents.analytics import analytics_agent
+from .agents.trend_monitor import trend_monitor
 
 # Import utilities
-from backend.utils.supabase_client import get_supabase_client
-from backend.utils.razorpay_client import get_razorpay_client
+from .utils.supabase_client import get_supabase_client
+from .utils.razorpay_client import get_razorpay_client
 
 # Import API routes
-from backend.api.budget_routes import router as budget_router
-from backend.api.oauth_routes import router as oauth_router
-from backend.api.conversation_routes import router as conversation_router
-from backend.api.embedding_routes import router as embedding_router
+from .api.budget_routes import router as budget_router
+from .api.oauth_routes import router as oauth_router
+from .api.conversation_routes import router as conversation_router
+from .api.embedding_routes import router as embedding_router
 
 # Configure logging
 logging.basicConfig(
@@ -966,22 +966,22 @@ async def health_check():
         except Exception as e:
             db_status = f"unhealthy: {str(e)}"
         
-        # Check AI services (Ollama) - optional for cloud deployment
-        ai_status = "healthy"
+        # Check AI services - Cloud-native deployment (no local Ollama)
+        ai_status = "healthy (using cloud providers)"
         try:
-            import ollama
-            # Check if Ollama is running
-            ollama.list()
-            ai_status = "healthy"
-        except ImportError:
-            ai_status = "not configured (Ollama not available in cloud)"
+            # Verify we can initialize the service manager (which configures LLMs)
+            from .core.service_factories import get_service_manager
+            service_manager = get_service_manager()
+            # Just verify the manager can be initialized without errors
+            _ = service_manager.llm
+            ai_status = "healthy (cloud-based LLMs configured)"
         except Exception as e:
-            ai_status = f"unhealthy: {str(e)}"
+            ai_status = f"warning: {str(e)}"
 
         # Check Chroma DB
         chroma_status = "healthy"
         try:
-            from backend.utils.embeddings import get_chroma_client
+            from .utils.embeddings import get_chroma_client
             client = get_chroma_client()
             client.heartbeat()
         except Exception as e:
