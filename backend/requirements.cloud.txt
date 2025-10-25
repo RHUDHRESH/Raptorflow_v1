@@ -86,3 +86,14 @@ structlog==23.2.0
 bandit==1.7.5
 safety==3.2.0
 pbr==6.0.0
+
+# OCR & Document Processing (World-Class)
+pytesseract==0.3.10
+pdf2image==1.16.3
+Pillow==10.1.0
+python-pptx==0.6.23
+openpyxl==3.11.0
+pandas>=2.1.0
+opencv-python==4.8.1.78
+numpy>=1.26.0
+langdetect==1.0.9

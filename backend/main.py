@@ -54,6 +54,7 @@ from .api.budget_routes import router as budget_router
 from .api.oauth_routes import router as oauth_router
 from .api.conversation_routes import router as conversation_router
 from .api.embedding_routes import router as embedding_router
+from .api.ocr_routes import router as ocr_router
 
 # Configure logging
 logging.basicConfig(
@@ -106,6 +107,7 @@ app.include_router(oauth_router, prefix="/api/auth", tags=["authentication"])
 app.include_router(conversation_router, prefix="/api/conversations", tags=["conversations"])
 app.include_router(embedding_router, prefix="/api", tags=["search"])
 app.include_router(budget_router, prefix="/api/budget", tags=["budget"])
+app.include_router(ocr_router, tags=["ocr"])
 
 supabase = get_supabase_client()
 razorpay = get_razorpay_client()
