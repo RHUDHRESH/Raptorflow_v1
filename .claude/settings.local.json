@@ -32,7 +32,8 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nFix TypeScript and import errors for GitHub Actions CI/CD deployment\n\nIssues resolved:\n1. Created missing animation variants module at frontend/components/animations/variants.ts\n   - Provides animation definitions for fade, stagger, scale, slide, and modal effects\n   - Exports commonly used animation variants (fadeInUp, staggerContainer, card, hoverLift, etc.)\n   - Fixes \"Module not found\" errors in research page and Card component\n\n2. Fixed incorrect UI component imports across frontend\n   - Changed default imports to named exports for Modal, Input, Button, Textarea\n   - Updated 8 strategy component files to use correct import syntax\n   - Eliminates \"does not contain a default export\" TypeScript errors\n   - Components affected: AvatarEditor, ContextIntakePanel, ContextTextInput, ContextURLInput, etc.\n\nBuild Status:\n✓ Frontend build passes: npm run build completed successfully\n✓ All TypeScript errors resolved\n✓ Backend requirements properly configured\n✓ GitHub Actions workflow ready for deployment\n\nThe app is now ready for seamless deployment on GitHub Actions CI/CD pipeline without any TypeScript compilation errors.\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(npm run type-check:*)",
       "Bash(git commit:*)",
-      "Read(//c/Users/hp/OneDrive/Desktop/**)"
+      "Read(//c/Users/hp/OneDrive/Desktop/**)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
